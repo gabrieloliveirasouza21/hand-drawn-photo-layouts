@@ -14,10 +14,10 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
   fotos coladas por cima), sketchbook quadrinhos (página em quadros, com fotos
   e cenas desenhadas), tira clássica (4 fotos), grade 2×2, polaroid e tira
   horizontal (3 fotos). Os três sketchbooks já saem em 4:5.
-- **Ilustração a nanquim gerada por código:** 9 cenários (montanhas,
-  floresta, mar, praia, cidade, trilho de trem, campo, deserto e show), só com
-  traço de caneta e hachura. Cada cenário tem elementos opcionais (lago ou
-  campina, farol, barco, casa, rio, caixa d'água, sinal de trem...). Todo
+- **Ilustração a nanquim gerada por código:** 6 cenários naturais
+  (montanhas, floresta, mar, praia, campo e deserto), só com traço de caneta e
+  hachura. Cada cenário tem elementos opcionais (lago ou campina, farol, barco,
+  casa, rio, sol ou lua...). Todo
   layout tem uma arte de fundo; em **Arte nanquim** dá para escolher o
   cenário, tirar a arte, ou clicar em **Gerar outra arte**: sorteia um
   cenário diferente (ou, com um cenário escolhido, outra versão dele)
@@ -99,8 +99,8 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 - `pattern` (opcional): pauta do papel, `dots`, `lines` ou `grid`
 - `binding` (opcional): espiral de caderno no `top` ou na lateral (`left`)
 - `scenes` (opcional): ilustrações a nanquim atrás das fotos, num retângulo
-  (`x`, `y`, `w`, `h`). Tipos: `mountains`, `forest`, `sea`, `beach`, `city`,
-  `railway`, `fields`, `desert`, `stage`.
+  (`x`, `y`, `w`, `h`). Tipos: `mountains`, `forest`, `sea`, `beach`,
+  `fields`, `desert`.
   `frame: true` desenha um quadro em volta (estilo quadrinho); `seed` muda o
   desenho; `opacity` (0–1) clareia a arte. Cenas sem quadro são arte de fundo:
   o usuário pode trocar o tipo ou tirá-las. Cenas com quadro sempre aparecem

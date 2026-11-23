@@ -82,11 +82,8 @@ export const SCENE_CHOICES: { id: SceneKind | 'none' | 'random' | ''; name: stri
   { id: 'forest', name: 'Floresta' },
   { id: 'sea', name: 'Mar' },
   { id: 'beach', name: 'Praia' },
-  { id: 'city', name: 'Cidade' },
-  { id: 'railway', name: 'Trilho de trem' },
   { id: 'fields', name: 'Campo' },
   { id: 'desert', name: 'Deserto' },
-  { id: 'stage', name: 'Show' },
   { id: 'none', name: 'Nenhuma' },
 ]
 
