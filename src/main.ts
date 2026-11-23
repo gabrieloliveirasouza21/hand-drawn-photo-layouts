@@ -2,6 +2,7 @@ import './style.css'
 import { DEFAULT_CROP, MAX_ZOOM } from './lib/crop'
 import { loadPhoto, releasePhoto, type Photo } from './lib/image'
 import { LayoutRenderer, type PlacedPhoto } from './render/stage'
+import { DEFAULT_STYLE, FILTERS, FONTS, PAPERS, loadFont, type FilterKind, type Style } from './render/style'
 import { templates, type Template } from './templates'
 
 const ACCEPT = 'image/*,.heic,.heif'
@@ -19,6 +20,34 @@ app.innerHTML = `
       <button id="add" type="button">Adicionar fotos</button>
       <input id="files" type="file" accept="${ACCEPT}" multiple hidden />
       <input id="file-one" type="file" accept="${ACCEPT}" hidden />
+    </div>
+    <div class="style-bar">
+      <label>
+        Filtro
+        <select id="filter">
+          ${FILTERS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
+        </select>
+      </label>
+      <label class="check"><input id="grain" type="checkbox" /> Grão</label>
+      <label>
+        Legenda
+        <input id="caption" type="text" maxlength="60" placeholder="sua legenda aqui" />
+      </label>
+      <label>
+        Fonte
+        <select id="font">
+          ${FONTS.map((f, i) => `<option value="${i}" style="font-family: '${f.family}'">${f.family}</option>`).join('')}
+        </select>
+      </label>
+      <fieldset class="papers">
+        <legend>Papel</legend>
+        ${PAPERS.map(
+          (p) => `<label class="swatch" title="${p.name}">
+            <input type="radio" name="paper" value="${p.id}" aria-label="${p.name}" />
+            <span style="background: ${p.paper}; border-color: ${p.ink}"></span>
+          </label>`,
+        ).join('')}
+      </fieldset>
     </div>
     <p id="status" role="status"></p>
   </header>
@@ -53,6 +82,11 @@ const replaceButton = $<HTMLButtonElement>('#replace')
 const removeButton = $<HTMLButtonElement>('#remove')
 const deselectButton = $<HTMLButtonElement>('#deselect')
 const stageEl = $<HTMLDivElement>('#stage')
+const filterSelect = $<HTMLSelectElement>('#filter')
+const grainInput = $<HTMLInputElement>('#grain')
+const captionInput = $<HTMLInputElement>('#caption')
+const fontSelect = $<HTMLSelectElement>('#font')
+const papersEl = $<HTMLFieldSetElement>('.papers')
 
 // As fotos ficam guardadas independentemente do layout: trocar de layout
 // mantém a ordem e o enquadramento, e o layout mostra só as primeiras N.
@@ -60,12 +94,13 @@ const placed: (PlacedPhoto | null)[] = []
 let template: Template = templates[0]
 let selected: number | null = null
 let replaceIndex: number | null = null
+const style: Style = { ...DEFAULT_STYLE }
 
 const renderer = new LayoutRenderer(stageEl)
 
 function redraw(): void {
   if (selected !== null && !placed[selected]) selected = null
-  renderer.render(template, placed, selected)
+  renderer.render(template, placed, selected, style)
   updateToolbar()
 }
 
@@ -214,4 +249,35 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') deselect()
 })
 
+// --- Estilo ---
+
+filterSelect.addEventListener('change', () => {
+  style.filter = filterSelect.value as FilterKind
+  redraw()
+})
+
+grainInput.addEventListener('change', () => {
+  style.grain = grainInput.checked
+  redraw()
+})
+
+captionInput.addEventListener('input', () => {
+  style.caption = captionInput.value
+  redraw()
+})
+
+fontSelect.addEventListener('change', async () => {
+  style.font = FONTS[Number(fontSelect.value)] ?? FONTS[0]
+  await loadFont(style.font)
+  redraw()
+})
+
+papersEl.addEventListener('change', (e) => {
+  const id = (e.target as HTMLInputElement).value
+  style.paper = PAPERS.find((p) => p.id === id) ?? null
+  redraw()
+})
+
 redraw()
+// O canvas não redesenha sozinho quando a fonte chega: espera e redesenha.
+void Promise.all(FONTS.map(loadFont)).then(redraw)

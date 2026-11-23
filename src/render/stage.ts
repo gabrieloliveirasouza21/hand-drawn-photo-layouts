@@ -1,10 +1,12 @@
 import Konva from 'konva'
 import type { Options } from 'roughjs/bin/core'
 import { clampPosition, clampZoom, cropFromPlacement, placement, type Crop } from '../lib/crop'
+import { filtered, grainPattern } from '../lib/filters'
 import type { Photo } from '../lib/image'
 import type { Caption, Doodle, Slot, Template } from '../templates'
 import { heartPoints, starPoints } from './doodles'
 import { gen, toKonva, withAlpha } from './rough-konva'
+import { DEFAULT_STYLE, type Style } from './style'
 
 /** Foto colocada num slot, com seu enquadramento. */
 export interface PlacedPhoto {
@@ -43,10 +45,13 @@ export class LayoutRenderer {
 
   /** `photos[i]` vai no slot i; `selected` destaca um slot. */
   render(
-    t: Template,
+    template: Template,
     photos: readonly (PlacedPhoto | null | undefined)[] = [],
     selected: number | null = null,
+    style: Style = DEFAULT_STYLE,
   ): void {
+    // O papel escolhido pelo usuário substitui as cores do layout.
+    const t: Template = { ...template, paper: style.paper?.paper ?? template.paper, ink: style.paper?.ink ?? template.ink }
     this.template = t
     this.stage.destroyChildren()
     this.container.style.cursor = ''
@@ -71,19 +76,32 @@ export class LayoutRenderer {
       ),
     )
 
-    t.slots.forEach((s, i) => art.add(this.slot(s, i, t, stroke, photos[i] ?? null)))
+    t.slots.forEach((s, i) => art.add(this.slot(s, i, t, stroke, photos[i] ?? null, style)))
     t.doodles?.forEach((d, i) => art.add(this.doodle(d, i, t, stroke)))
-    if (t.caption) art.add(this.caption(t.caption, t))
 
     const ui = new Konva.Layer({ name: 'ui', listening: false })
     const sel = selected !== null ? t.slots[selected] : undefined
     if (sel) ui.add(this.selection(sel, stroke))
 
+    // Legenda vazia mostra um texto de exemplo só na tela, fora da arte.
+    if (t.caption) {
+      const text = style.caption.trim()
+      if (text) art.add(this.caption(t.caption, t, text, style, 1))
+      else ui.add(this.caption(t.caption, t, 'sua legenda aqui', style, 0.4))
+    }
+
     this.stage.add(art, ui)
     this.fit()
   }
 
-  private slot(s: Slot, i: number, t: Template, stroke: number, placed: PlacedPhoto | null): Konva.Group {
+  private slot(
+    s: Slot,
+    i: number,
+    t: Template,
+    stroke: number,
+    placed: PlacedPhoto | null,
+    style: Style,
+  ): Konva.Group {
     const group = new Konva.Group({
       name: 'slot',
       x: s.x + s.w / 2,
@@ -106,7 +124,7 @@ export class LayoutRenderer {
     }
 
     if (placed) {
-      group.add(this.photo(placed, s, i))
+      group.add(this.photo(placed, s, i, style))
       group.add(...toKonva(gen.rectangle(-s.w / 2, -s.h / 2, s.w, s.h, border)))
       group.on('wheel', (e) => {
         e.evt.preventDefault()
@@ -145,11 +163,11 @@ export class LayoutRenderer {
   }
 
   /** Foto recortada no slot; arrastável para reenquadrar. */
-  private photo(placed: PlacedPhoto, s: Slot, i: number): Konva.Group {
+  private photo(placed: PlacedPhoto, s: Slot, i: number, style: Style): Konva.Group {
     const clip = new Konva.Group({ clipX: -s.w / 2, clipY: -s.h / 2, clipWidth: s.w, clipHeight: s.h })
     const p = placement(placed.photo, s, placed.crop)
     const image = new Konva.Image({
-      image: placed.photo.source,
+      image: filtered(placed.photo, style.filter),
       ...p,
       draggable: true,
       // Evita que um toque com o dedo tremendo vire arraste.
@@ -161,6 +179,25 @@ export class LayoutRenderer {
       this.onCropChange?.(i, crop)
     })
     clip.add(image)
+
+    if (style.grain) {
+      clip.add(
+        new Konva.Rect({
+          x: -s.w / 2,
+          y: -s.h / 2,
+          width: s.w,
+          height: s.h,
+          // Os tipos do Konva pedem <img>, mas createPattern aceita canvas.
+          fillPatternImage: grainPattern() as unknown as HTMLImageElement,
+          fillPatternRepeat: 'repeat',
+          // Grão de ~2px no arquivo final.
+          fillPatternScale: { x: 2, y: 2 },
+          globalCompositeOperation: 'overlay',
+          opacity: 0.35,
+          listening: false,
+        }),
+      )
+    }
     return clip
   }
 
@@ -190,8 +227,7 @@ export class LayoutRenderer {
     return group
   }
 
-  private caption(c: Caption, t: Template): Konva.Text {
-    // Fonte manuscrita de verdade entra no M4; por ora usa o fallback "cursive".
+  private caption(c: Caption, t: Template, content: string, style: Style, opacity: number): Konva.Text {
     const text = new Konva.Text({
       name: 'caption',
       x: c.x - c.w / 2,
@@ -199,11 +235,12 @@ export class LayoutRenderer {
       width: c.w,
       align: 'center',
       wrap: 'none',
-      text: 'sua legenda aqui',
+      text: content,
       fontSize: c.size,
-      fontFamily: `${c.font}, cursive`,
+      fontFamily: `"${style.font.family}", cursive`,
+      fontStyle: String(style.font.weight),
       fill: t.ink,
-      opacity: 0.45,
+      opacity,
       listening: false,
     })
     // Encolhe a fonte até caber em uma linha.
