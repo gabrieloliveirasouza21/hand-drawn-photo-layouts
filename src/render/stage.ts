@@ -4,7 +4,7 @@ import { clampPosition, clampZoom, cropFromPlacement, placement, type Crop } fro
 import { filtered, grainPattern } from '../lib/filters'
 import type { Photo } from '../lib/image'
 import type { Caption, Slot, Template } from '../templates'
-import { gen, mix, toKonva, withAlpha } from './rough-konva'
+import { gen, toKonva, withAlpha } from './rough-konva'
 import { inkScene } from './ink'
 import { clipToPolygon, pagePattern, pen, spiralBinding, squiggle, tape, wobblyQuad, type Point } from './sketch'
 import { DEFAULT_STYLE, type Style } from './style'
@@ -78,32 +78,23 @@ export class LayoutRenderer {
     const art = new Konva.Layer({ name: 'art' })
     const ui = new Konva.Layer({ name: 'ui', listening: false })
 
-    // Posição do layout dentro do quadro final.
+    // Posição do layout dentro do quadro final: o maior possível, centralizado.
+    // O papel preenche o quadro inteiro, sem faixa de outra cor em volta.
     const [fw, fh] = outputSize ?? t.size
-    const margin = outputSize ? Math.min(fw, fh) * 0.07 : 0
-    const scale = outputSize ? Math.min((fw - margin * 2) / w, (fh - margin * 2) / h) : 1
+    const scale = outputSize ? Math.min(fw / w, fh / h) : 1
     const transform = { x: (fw - w * scale) / 2, y: (fh - h * scale) / 2, scaleX: scale, scaleY: scale }
     this.frame = [fw, fh]
     this.contentScale = scale
 
     if (outputSize) {
-      art.add(new Konva.Rect({ width: fw, height: fh, fill: mix(t.paper, t.ink, 0.12), listening: false }))
+      art.add(new Konva.Rect({ width: fw, height: fh, fill: t.paper, listening: false }))
     }
     const content = new Konva.Group(transform)
     const uiContent = new Konva.Group(transform)
     art.add(content)
     ui.add(uiContent)
 
-    content.add(
-      new Konva.Rect({
-        width: w,
-        height: h,
-        fill: t.paper,
-        listening: false,
-        // Sombra leve: o papel "apoiado" sobre o fundo.
-        ...(outputSize && { shadowColor: '#000', shadowOpacity: 0.3, shadowBlur: stroke * 8, shadowOffsetY: stroke * 2 }),
-      }),
-    )
+    content.add(new Konva.Rect({ width: w, height: h, fill: t.paper, listening: false }))
 
     // Pauta e espiral (sketchbook)
     const unit = Math.min(w, h) / 27
