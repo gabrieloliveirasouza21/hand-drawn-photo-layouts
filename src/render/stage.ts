@@ -5,6 +5,7 @@ import { filtered, grainPattern } from '../lib/filters'
 import type { Photo } from '../lib/image'
 import type { Caption, Slot, Template } from '../templates'
 import { gen, mix, toKonva, withAlpha } from './rough-konva'
+import { drawing } from './drawings'
 import { clipToPolygon, pagePattern, pen, spiralBinding, squiggle, tape, wobblyQuad, type Point } from './sketch'
 import { DEFAULT_STYLE, type Style } from './style'
 
@@ -99,8 +100,17 @@ export class LayoutRenderer {
 
     // Pauta e espiral (sketchbook)
     const unit = Math.min(w, h) / 27
-    if (t.pattern) content.add(pagePattern(t.pattern, w, h, t.ink, unit, t.binding ? unit * 2.6 : unit))
-    if (t.binding) content.add(...spiralBinding(w, t.ink, unit))
+    if (t.pattern) {
+      const top = t.binding === 'top' ? unit * 2.6 : unit
+      const left = t.binding === 'left' ? unit * 2.6 : unit
+      content.add(pagePattern(t.pattern, w, h, t.ink, unit, top, left))
+    }
+    if (t.binding) content.add(...spiralBinding(t.binding, w, h, t.ink, unit))
+
+    // Rabiscos de fundo, atrás das fotos. Com papel escolhido pelo usuário,
+    // a caneta acompanha a tinta do papel para continuar legível.
+    const drawingInk = style.paper ? t.ink : (template.drawingInk ?? t.ink)
+    t.drawings?.forEach((d, i) => content.add(drawing(d, drawingInk, stroke * 0.55, 300 + i * 17)))
 
     // Moldura do papel, torta como feita à mão
     if (t.frame !== false) {
@@ -115,7 +125,7 @@ export class LayoutRenderer {
     if (sel) uiContent.add(this.selection(sel, stroke))
 
     // Legenda vazia mostra um texto de exemplo só na tela, fora da arte.
-    if (t.caption) {
+    if (t.caption && style.showCaption) {
       const text = style.caption.trim()
       if (text) {
         const caption = this.caption(t.caption, t, text, style, 1)

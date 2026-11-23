@@ -14,6 +14,33 @@ export interface Slot {
   tape?: TapeKind
 }
 
+export type DrawingKind =
+  | 'branch'
+  | 'flower'
+  | 'swirl'
+  | 'cloud'
+  | 'sun'
+  | 'moon'
+  | 'notes'
+  | 'bolt'
+  | 'arrow'
+  | 'eye'
+  | 'stain'
+  | 'hatch'
+  | 'waves'
+
+/** Rabisco de fundo de sketchbook, desenhado atrás das fotos. */
+export interface Drawing {
+  kind: DrawingKind
+  /** Centro do desenho. */
+  x: number
+  y: number
+  size: number
+  rotate?: number
+  /** Cor de aquarela por baixo do traço, em #rrggbb. */
+  wash?: string
+}
+
 export interface Caption {
   /** Centro horizontal e topo do texto. */
   x: number
@@ -37,6 +64,10 @@ export interface Template {
   frame?: boolean
   /** Pauta do papel. */
   pattern?: PagePattern
-  /** Espiral de caderno no topo. */
-  binding?: 'top'
+  /** Espiral de caderno no topo ou na lateral esquerda. */
+  binding?: 'top' | 'left'
+  /** Desenhos de fundo, atrás das fotos. */
+  drawings?: Drawing[]
+  /** Cor da caneta dos desenhos (ex.: azul de esferográfica). Padrão: `ink`. */
+  drawingInk?: string
 }

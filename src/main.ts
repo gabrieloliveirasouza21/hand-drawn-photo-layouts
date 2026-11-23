@@ -2,7 +2,7 @@ import '@fontsource/pixelify-sans/400.css'
 import '@fontsource/pixelify-sans/700.css'
 import './style.css'
 import { DEFAULT_CROP, MAX_ZOOM } from './lib/crop'
-import { FORMATS, canShareFiles, download, fileName, share } from './lib/export'
+import { FORMATS, download, fileName } from './lib/export'
 import { loadPhoto, releasePhoto, type Photo } from './lib/image'
 import { LayoutRenderer, type PlacedPhoto } from './render/stage'
 import { ThumbnailRenderer } from './render/thumbnails'
@@ -46,7 +46,6 @@ app.innerHTML = `
             </select>
           </label>
           <button id="download" type="button" class="primary"><u>B</u>aixar</button>
-          <button id="share" type="button" hidden>Compartilhar</button>
         </div>
         <div id="toolbar" role="toolbar" aria-label="Foto selecionada" hidden>
           <strong id="sel-label"></strong>
@@ -88,10 +87,8 @@ app.innerHTML = `
               </select>
             </label>
             <label class="check"><input id="grain" type="checkbox" /> Grão de filme</label>
-            <label>
-              Legenda
-              <input id="caption" type="text" maxlength="60" placeholder="sua legenda aqui" />
-            </label>
+            <label class="check"><input id="caption-on" type="checkbox" checked /> Legenda</label>
+            <input id="caption" type="text" maxlength="60" placeholder="sua legenda aqui" aria-label="Texto da legenda" />
             <label>
               Fonte
               <select id="font">
@@ -138,7 +135,7 @@ const papersEl = $<HTMLFieldSetElement>('.papers')
 const clockEl = $<HTMLSpanElement>('#clock')
 const formatSelect = $<HTMLSelectElement>('#format')
 const downloadButton = $<HTMLButtonElement>('#download')
-const shareButton = $<HTMLButtonElement>('#share')
+const captionOnInput = $<HTMLInputElement>('#caption-on')
 
 // As fotos ficam guardadas independentemente do layout: trocar de layout
 // mantém a ordem e o enquadramento, e o layout mostra só as primeiras N.
@@ -349,6 +346,13 @@ captionInput.addEventListener('input', () => {
   redraw()
 })
 
+// Sem legenda: nada no arquivo e nem o texto de exemplo na tela.
+captionOnInput.addEventListener('change', () => {
+  style.showCaption = captionOnInput.checked
+  captionInput.disabled = fontSelect.disabled = !style.showCaption
+  redraw()
+})
+
 fontSelect.addEventListener('change', async () => {
   style.font = FONTS[Number(fontSelect.value)] ?? FONTS[0]
   await loadFont(style.font)
@@ -368,35 +372,22 @@ formatSelect.addEventListener('change', () => {
   redraw()
 })
 
-async function exportImage(action: 'download' | 'share'): Promise<void> {
-  downloadButton.disabled = shareButton.disabled = true
+async function exportImage(): Promise<void> {
+  downloadButton.disabled = true
   statusEl.textContent = 'Gerando imagem…'
   try {
     const blob = await renderer.exportImage(format.mime)
-    const name = fileName(template.id, format)
-    if (action === 'share') {
-      try {
-        await share(blob, name)
-      } catch (err) {
-        // Safari recusa compartilhar se a imagem demorou a ficar pronta: baixa no lugar.
-        if (err instanceof DOMException && err.name === 'NotAllowedError') download(blob, name)
-        else throw err
-      }
-    } else {
-      download(blob, name)
-    }
+    download(blob, fileName(template.id, format))
     statusEl.textContent = ''
   } catch (err) {
     console.error(err)
     statusEl.textContent = 'Não consegui gerar a imagem.'
   } finally {
-    downloadButton.disabled = shareButton.disabled = false
+    downloadButton.disabled = false
   }
 }
 
-downloadButton.addEventListener('click', () => void exportImage('download'))
-shareButton.addEventListener('click', () => void exportImage('share'))
-shareButton.hidden = !canShareFiles()
+downloadButton.addEventListener('click', () => void exportImage())
 
 redraw()
 // O canvas não redesenha sozinho quando a fonte chega: espera e redesenha.

@@ -9,8 +9,9 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
 
 ## O que dá para fazer
 
-- **5 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
-  adesiva, já em 4:5), tira clássica (4 fotos), grade 2×2, polaroid e tira
+- **6 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
+  adesiva, já em 4:5), sketchbook rabiscado (desenhos de caneta azul e
+  aquarela no fundo), tira clássica (4 fotos), grade 2×2, polaroid e tira
   horizontal (3 fotos)
 - **Traço à mão:** bordas tortas com dupla passada de caneta (Rough.js), foto
   recortada seguindo a borda e legenda com sublinhado ondulado
@@ -18,8 +19,8 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
   Aceita HEIC de iPhone.
 - **Enquadramento:** arraste a foto dentro do espaço, dê zoom (roda do mouse ou
   slider), troque de lugar, substitua ou remova
-- **Estilo:** filtros (colorido, P&B, sépia, vintage), grão de filme, legenda em
-  3 fontes manuscritas e 6 cores de papel
+- **Estilo:** filtros (colorido, P&B, sépia, vintage), grão de filme, legenda
+  opcional em 3 fontes manuscritas e 6 cores de papel
 - **Exportar:**
 
   | Formato | Tamanho | Arquivo |
@@ -28,8 +29,6 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
   | Instagram quadrado 1:1 | 1080×1080 | JPEG |
   | Stories 9:16 | 1080×1920 | JPEG |
   | Impressão | tamanho do layout (300 dpi) | PNG |
-
-  No celular, o botão **Compartilhar** manda a imagem direto para outros apps.
 
 ## Desenvolvimento
 
@@ -70,7 +69,9 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
   "pattern": "dots",
   "binding": "top",
   "frame": false,
+  "drawingInk": "#2a4da0",
   "slots": [{ "x": 100, "y": 200, "w": 1000, "h": 1000, "rotate": -3, "tape": "top" }],
+  "drawings": [{ "kind": "flower", "x": 200, "y": 1500, "size": 300, "rotate": -8, "wash": "#f08a8a" }],
   "caption": { "x": 600, "y": 1400, "w": 1000, "size": 120, "font": "Caveat" }
 }
 ```
@@ -80,7 +81,12 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 - `caption`: `x` é o centro horizontal, `y` o topo do texto
 - `paper` e `ink`: cores padrão, que o usuário pode trocar pelos papéis prontos
 - `pattern` (opcional): pauta do papel, `dots`, `lines` ou `grid`
-- `binding` (opcional): `top` desenha a espiral de caderno
+- `binding` (opcional): espiral de caderno no `top` ou na lateral (`left`)
+- `drawings` (opcional): rabiscos de fundo, atrás das fotos, posicionados pelo
+  centro. Tipos: `branch`, `flower`, `swirl`, `cloud`, `sun`, `moon`, `notes`,
+  `bolt`, `arrow`, `eye`, `stain` (mancha de café), `hatch` (hachura), `waves`.
+  `wash` pinta uma mancha de aquarela por baixo
+- `drawingInk` (opcional): cor da caneta dos rabiscos; padrão é `ink`
 - `frame` (opcional): `false` tira a moldura desenhada em volta do papel
 
 ## Como funciona
@@ -91,10 +97,11 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 | `src/render/stage.ts` | desenha o layout com Konva; camada `art` (vai para o arquivo) e `ui` (seleção, nunca exportada) |
 | `src/render/rough-konva.ts` | converte os traços do Rough.js em `Konva.Path` |
 | `src/render/sketch.ts` | formas tortas, sublinhado, pauta, espiral e fita adesiva |
+| `src/render/drawings.ts` | rabiscos de fundo do sketchbook (flor, galho, olho etc.) |
 | `src/lib/image.ts` | lê, converte HEIC e reduz as fotos para 2000px |
 | `src/lib/crop.ts` | enquadramento como "centro + zoom", que sobrevive à troca de layout |
 | `src/lib/filters.ts` | filtros por pixel e textura de grão |
-| `src/lib/export.ts` | formatos, download e compartilhamento |
+| `src/lib/export.ts` | formatos e download |
 
 ## Créditos
 

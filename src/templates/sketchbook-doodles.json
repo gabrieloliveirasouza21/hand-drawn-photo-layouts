@@ -1,0 +1,32 @@
+{
+  "id": "sketchbook-doodles",
+  "name": "Sketchbook rabiscado (3 fotos)",
+  "size": [1600, 2000],
+  "paper": "#f6f1e4",
+  "ink": "#2b2420",
+  "drawingInk": "#2a4da0",
+  "frame": false,
+  "binding": "left",
+  "slots": [
+    { "x": 330, "y": 170, "w": 760, "h": 560, "rotate": -3, "tape": "top" },
+    { "x": 1010, "y": 780, "w": 470, "h": 600, "rotate": 4, "tape": "corners" },
+    { "x": 260, "y": 1200, "w": 680, "h": 500, "rotate": -2, "tape": "top" }
+  ],
+  "drawings": [
+    { "kind": "branch", "x": 1330, "y": 370, "size": 440, "rotate": 15 },
+    { "kind": "moon", "x": 1420, "y": 670, "size": 170, "rotate": -15 },
+    { "kind": "hatch", "x": 1090, "y": 190, "size": 190 },
+    { "kind": "swirl", "x": 235, "y": 330, "size": 150 },
+    { "kind": "flower", "x": 300, "y": 960, "size": 340, "rotate": -8, "wash": "#f08a8a" },
+    { "kind": "notes", "x": 600, "y": 880, "size": 200, "rotate": -10 },
+    { "kind": "cloud", "x": 780, "y": 1030, "size": 240, "wash": "#8fc1e3" },
+    { "kind": "arrow", "x": 920, "y": 800, "size": 180, "rotate": 30 },
+    { "kind": "stain", "x": 600, "y": 1180, "size": 260 },
+    { "kind": "eye", "x": 1250, "y": 1520, "size": 280, "rotate": -6 },
+    { "kind": "swirl", "x": 1060, "y": 1700, "size": 140, "rotate": 90 },
+    { "kind": "sun", "x": 1400, "y": 1700, "size": 170, "wash": "#f2c14e" },
+    { "kind": "bolt", "x": 220, "y": 1830, "size": 170, "rotate": -12, "wash": "#f2c14e" },
+    { "kind": "waves", "x": 1500, "y": 1470, "size": 140, "rotate": -6 }
+  ],
+  "caption": { "x": 950, "y": 1800, "w": 1000, "size": 140, "font": "Caveat" }
+}

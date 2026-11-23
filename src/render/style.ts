@@ -43,6 +43,8 @@ export const PAPERS: PaperPreset[] = [
 export interface Style {
   filter: FilterKind
   grain: boolean
+  /** Desligado: o layout sai sem legenda. */
+  showCaption: boolean
   caption: string
   font: Font
   /** null = cores do próprio layout. */
@@ -52,6 +54,7 @@ export interface Style {
 export const DEFAULT_STYLE: Style = {
   filter: 'none',
   grain: false,
+  showCaption: true,
   caption: '',
   font: FONTS[0],
   paper: null,

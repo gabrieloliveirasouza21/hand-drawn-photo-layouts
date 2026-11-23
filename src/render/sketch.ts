@@ -71,7 +71,15 @@ export function squiggle(x0: number, x1: number, y: number, amp: number, opts: O
 }
 
 /** Pauta do papel (pontilhado, linhas ou quadriculado), desenhada numa forma só. */
-export function pagePattern(kind: PagePattern, w: number, h: number, ink: string, unit: number, top: number): Konva.Shape {
+export function pagePattern(
+  kind: PagePattern,
+  w: number,
+  h: number,
+  ink: string,
+  unit: number,
+  top: number,
+  left = unit,
+): Konva.Shape {
   return new Konva.Shape({
     listening: false,
     sceneFunc: (context) => {
@@ -82,7 +90,7 @@ export function pagePattern(kind: PagePattern, w: number, h: number, ink: string
       c.lineWidth = unit * 0.035
       if (kind === 'dots') {
         for (let y = top; y < h - unit / 2; y += unit) {
-          for (let x = unit; x < w - unit / 2; x += unit) {
+          for (let x = left; x < w - unit / 2; x += unit) {
             c.beginPath()
             c.arc(x, y, unit * 0.055, 0, Math.PI * 2)
             c.fill()
@@ -91,11 +99,11 @@ export function pagePattern(kind: PagePattern, w: number, h: number, ink: string
       } else {
         c.beginPath()
         for (let y = top; y < h; y += unit) {
-          c.moveTo(0, y)
+          c.moveTo(left - unit, y)
           c.lineTo(w, y)
         }
         if (kind === 'grid') {
-          for (let x = unit; x < w; x += unit) {
+          for (let x = left; x < w; x += unit) {
             c.moveTo(x, top - unit)
             c.lineTo(x, h)
           }
@@ -107,20 +115,22 @@ export function pagePattern(kind: PagePattern, w: number, h: number, ink: string
   })
 }
 
-/** Espiral de caderno no topo da página: furos e argolas desenhadas à mão. */
-export function spiralBinding(w: number, ink: string, unit: number): Konva.Shape[] {
+/** Espiral de caderno (topo ou lateral esquerda): furos e argolas desenhadas à mão. */
+export function spiralBinding(side: 'top' | 'left', w: number, h: number, ink: string, unit: number): Konva.Shape[] {
   const nodes: Konva.Shape[] = []
+  const length = side === 'top' ? w : h
   const gap = unit * 1.15
-  const count = Math.floor((w - unit * 2) / gap)
-  const start = (w - (count - 1) * gap) / 2
+  const count = Math.floor((length - unit * 2) / gap)
+  const start = (length - (count - 1) * gap) / 2
   for (let i = 0; i < count; i++) {
-    const x = start + i * gap
-    nodes.push(new Konva.Circle({ x, y: unit * 1.25, radius: unit * 0.2, fill: withAlpha(ink, 0.85), listening: false }))
-    nodes.push(
-      ...toKonva(
-        gen.ellipse(x - unit * 0.12, unit * 0.72, unit * 0.42, unit * 1.3, pen(ink, unit * 0.09, 500 + i)),
-      ),
-    )
+    const along = start + i * gap
+    // Calcula como se fosse no topo e troca os eixos para a lateral.
+    const at = (a: number, b: number): Point => (side === 'top' ? [a, b] : [b, a])
+    const [hx, hy] = at(along, unit * 1.25)
+    const [ex, ey] = at(along - unit * 0.12, unit * 0.72)
+    const [ew, eh] = side === 'top' ? [unit * 0.42, unit * 1.3] : [unit * 1.3, unit * 0.42]
+    nodes.push(new Konva.Circle({ x: hx, y: hy, radius: unit * 0.2, fill: withAlpha(ink, 0.85), listening: false }))
+    nodes.push(...toKonva(gen.ellipse(ex, ey, ew, eh, pen(ink, unit * 0.09, 500 + i))))
   }
   return nodes
 }

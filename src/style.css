@@ -190,6 +190,12 @@ button:disabled {
   cursor: progress;
 }
 
+select:disabled,
+input[type='text']:disabled {
+  background: var(--face);
+  color: var(--shadow);
+}
+
 select,
 input[type='text'] {
   min-height: 30px;

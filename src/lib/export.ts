@@ -31,25 +31,3 @@ export function download(blob: Blob, name: string): void {
   // Dá tempo do navegador iniciar o download antes de liberar a URL.
   setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
-
-/** O navegador consegue compartilhar arquivos (celular: abre a folha de compartilhar)? */
-export function canShareFiles(): boolean {
-  try {
-    const probe = new File([''], 'probe.jpg', { type: 'image/jpeg' })
-    return !!navigator.canShare?.({ files: [probe] })
-  } catch {
-    return false
-  }
-}
-
-/** Abre a folha de compartilhar do sistema. Retorna false se o usuário cancelar. */
-export async function share(blob: Blob, name: string): Promise<boolean> {
-  const file = new File([blob], name, { type: blob.type })
-  try {
-    await navigator.share({ files: [file] })
-    return true
-  } catch (err) {
-    if (err instanceof DOMException && err.name === 'AbortError') return false
-    throw err
-  }
-}
