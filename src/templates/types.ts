@@ -16,7 +16,16 @@ export interface Slot {
   mat?: boolean
 }
 
-export type SceneKind = 'mountains' | 'forest' | 'sea' | 'city'
+export type SceneKind =
+  | 'mountains'
+  | 'forest'
+  | 'sea'
+  | 'beach'
+  | 'city'
+  | 'railway'
+  | 'fields'
+  | 'desert'
+  | 'stage'
 
 /** Ilustração a nanquim gerada por código, atrás das fotos. */
 export interface Scene {

@@ -14,18 +14,29 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
   fotos coladas por cima), sketchbook quadrinhos (página em quadros, com fotos
   e cenas desenhadas), tira clássica (4 fotos), grade 2×2, polaroid e tira
   horizontal (3 fotos). Os três sketchbooks já saem em 4:5.
-- **Ilustração a nanquim gerada por código:** montanhas, floresta, mar e
-  cidade, só com traço de caneta e hachura (paralela e cruzada). Todo layout
-  tem uma arte de fundo; em **Arte nanquim** dá para trocar o tipo, tirar, ou
-  clicar em **Gerar outra arte** para sortear um desenho novo
+- **Ilustração a nanquim gerada por código:** 9 cenários (montanhas,
+  floresta, mar, praia, cidade, trilho de trem, campo, deserto e show), só com
+  traço de caneta e hachura. Cada cenário tem elementos opcionais (lago ou
+  campina, farol, barco, casa, rio, caixa d'água, sinal de trem...). Todo
+  layout tem uma arte de fundo; em **Arte nanquim** dá para escolher o
+  cenário, tirar a arte, ou clicar em **Gerar outra arte**: sorteia um
+  cenário diferente (ou, com um cenário escolhido, outra versão dele)
 - **Traço à mão:** bordas tortas com dupla passada de caneta (Rough.js), foto
   recortada seguindo a borda e legenda com sublinhado ondulado
 - **Fotos:** botão, arrastar arquivos para a página ou tocar num espaço vazio.
   Aceita HEIC de iPhone.
 - **Enquadramento:** arraste a foto dentro do espaço, dê zoom (roda do mouse ou
   slider), troque de lugar, substitua ou remova
-- **Estilo:** filtros (colorido, P&B, sépia, vintage), grão de filme, legenda
-  opcional em 3 fontes manuscritas e 6 cores de papel
+- **Estilo:**
+  - 11 filtros: colorido, P&B, noir, sépia, vintage, desbotado, quente, frio,
+    cianotipia, xerox (fotocópia de zine) e "tinta e papel" (duotom nas cores
+    do papel escolhido)
+  - grão de filme
+  - legenda opcional em 8 fontes manuscritas (Caveat, Patrick Hand, Permanent
+    Marker, Rock Salt, Special Elite, Shadows Into Light, Gloria Hallelujah,
+    Reenie Beanie)
+  - 13 cores de papel, cada uma com a cor de tinta que combina
+  - pauta do caderno opcional
 - **Exportar:**
 
   | Formato | Tamanho | Arquivo |
@@ -88,7 +99,8 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 - `pattern` (opcional): pauta do papel, `dots`, `lines` ou `grid`
 - `binding` (opcional): espiral de caderno no `top` ou na lateral (`left`)
 - `scenes` (opcional): ilustrações a nanquim atrás das fotos, num retângulo
-  (`x`, `y`, `w`, `h`). Tipos: `mountains`, `forest`, `sea`, `city`.
+  (`x`, `y`, `w`, `h`). Tipos: `mountains`, `forest`, `sea`, `beach`, `city`,
+  `railway`, `fields`, `desert`, `stage`.
   `frame: true` desenha um quadro em volta (estilo quadrinho); `seed` muda o
   desenho; `opacity` (0–1) clareia a arte. Cenas sem quadro são arte de fundo:
   o usuário pode trocar o tipo ou tirá-las. Cenas com quadro sempre aparecem
@@ -112,8 +124,7 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 
 - [Konva](https://konvajs.org/) (canvas) e [Rough.js](https://roughjs.com/) (traço desenhado à mão)
 - [heic2any](https://github.com/alexcorvi/heic2any) (fotos HEIC)
-- Fontes [Caveat](https://fonts.google.com/specimen/Caveat),
-  [Patrick Hand](https://fonts.google.com/specimen/Patrick+Hand) e
-  [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker) (legendas) e
-  [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (interface),
-  via [Fontsource](https://fontsource.org/)
+- Fontes (licença OFL, via [Fontsource](https://fontsource.org/)):
+  Caveat, Patrick Hand, Permanent Marker, Rock Salt, Special Elite, Shadows
+  Into Light, Gloria Hallelujah e Reenie Beanie (legendas) e Pixelify Sans
+  (interface)

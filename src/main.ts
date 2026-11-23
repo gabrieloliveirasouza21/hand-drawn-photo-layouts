@@ -16,7 +16,7 @@ import {
   type FilterKind,
   type Style,
 } from './render/style'
-import type { SceneKind } from './templates'
+import { pickScene } from './render/ink'
 import { templates, type Template } from './templates'
 
 const ACCEPT = 'image/*,.heic,.heif'
@@ -97,6 +97,7 @@ app.innerHTML = `
               </select>
             </label>
             <button id="reroll" type="button">✎ <u>G</u>erar outra arte</button>
+            <label class="check"><input id="pattern-on" type="checkbox" checked /> Pauta do caderno</label>
             <label>
               Filtro
               <select id="filter">
@@ -155,6 +156,7 @@ const downloadButton = $<HTMLButtonElement>('#download')
 const captionOnInput = $<HTMLInputElement>('#caption-on')
 const sceneSelect = $<HTMLSelectElement>('#scene')
 const rerollButton = $<HTMLButtonElement>('#reroll')
+const patternOnInput = $<HTMLInputElement>('#pattern-on')
 
 // As fotos ficam guardadas independentemente do layout: trocar de layout
 // mantém a ordem e o enquadramento, e o layout mostra só as primeiras N.
@@ -191,6 +193,9 @@ function updateLayoutButtons(): void {
   for (const button of layoutButtons) {
     button.setAttribute('aria-pressed', String(button.dataset.id === template.id))
   }
+  // Só os layouts de caderno têm pauta.
+  patternOnInput.disabled = !template.pattern
+  patternOnInput.parentElement!.title = template.pattern ? '' : 'Este layout não tem pauta'
 }
 
 function updateToolbar(): void {
@@ -351,14 +356,31 @@ setInterval(tick, 15_000)
 // --- Estilo ---
 
 sceneSelect.addEventListener('change', () => {
-  style.scene = (sceneSelect.value || null) as SceneKind | 'none' | null
+  style.scene = (sceneSelect.value || null) as Style['scene']
   rerollButton.disabled = style.scene === 'none'
   redraw()
 })
 
-// Cada clique sorteia outra variação da arte (montanhas, prédios etc. mudam).
+/**
+ * "Gerar outra arte": com um cenário escolhido no menu, gera outra versão
+ * dele (elementos e composição mudam). Senão, passa para "Aleatória" e
+ * sorteia um cenário diferente do que está na tela.
+ */
 rerollButton.addEventListener('click', () => {
-  style.sceneSeed += 1 + Math.floor(Math.random() * 1000)
+  if (style.scene === null || style.scene === 'random') {
+    const current = style.scene === 'random' ? pickScene(style.sceneSeed, 0) : template.scenes?.[0]?.kind
+    style.scene = 'random'
+    sceneSelect.value = 'random'
+    do style.sceneSeed += 1 + Math.floor(Math.random() * 1000)
+    while (pickScene(style.sceneSeed, 0) === current)
+  } else {
+    style.sceneSeed += 1 + Math.floor(Math.random() * 1000)
+  }
+  redraw()
+})
+
+patternOnInput.addEventListener('change', () => {
+  style.showPattern = patternOnInput.checked
   redraw()
 })
 

@@ -1,11 +1,11 @@
 import Konva from 'konva'
 import type { Options } from 'roughjs/bin/core'
 import { clampPosition, clampZoom, cropFromPlacement, placement, type Crop } from '../lib/crop'
-import { filtered, grainPattern } from '../lib/filters'
+import { filtered, grainPattern, type Tone } from '../lib/filters'
 import type { Photo } from '../lib/image'
 import type { Caption, Slot, Template } from '../templates'
 import { gen, toKonva, withAlpha } from './rough-konva'
-import { inkScene } from './ink'
+import { inkScene, pickScene } from './ink'
 import { clipToPolygon, pagePattern, pen, spiralBinding, squiggle, tape, wobblyQuad, type Point } from './sketch'
 import { DEFAULT_STYLE, type Style } from './style'
 
@@ -98,7 +98,7 @@ export class LayoutRenderer {
 
     // Pauta e espiral (sketchbook)
     const unit = Math.min(w, h) / 27
-    if (t.pattern) {
+    if (t.pattern && style.showPattern) {
       const top = t.binding === 'top' ? unit * 2.6 : unit
       const left = t.binding === 'left' ? unit * 2.6 : unit
       content.add(pagePattern(t.pattern, w, h, t.ink, unit, top, left))
@@ -109,7 +109,12 @@ export class LayoutRenderer {
     // arte de fundo, que o usuário pode trocar ou tirar.
     t.scenes?.forEach((sc, i) => {
       if (!sc.frame && style.scene === 'none') return
-      const kind = style.scene && style.scene !== 'none' ? style.scene : sc.kind
+      const kind =
+        style.scene === 'random'
+          ? pickScene(style.sceneSeed, i)
+          : style.scene && style.scene !== 'none'
+            ? style.scene
+            : sc.kind
       const seed = (sc.seed ?? 100 + i) + style.sceneSeed * 7919
       const art = inkScene(kind, sc.w, sc.h, t.ink, t.paper, stroke * 0.5, seed, this.sceneScale)
       content.add(
@@ -234,7 +239,7 @@ export class LayoutRenderer {
     }
 
     if (placed) {
-      group.add(this.photo(placed, s, i, style, quad))
+      group.add(this.photo(placed, s, i, style, quad, { ink: t.ink, paper: t.paper }))
       group.add(...toKonva(gen.polygon(quad, border)))
       group.add(...tapeNodes)
       group.on('wheel', (e) => {
@@ -276,12 +281,12 @@ export class LayoutRenderer {
   }
 
   /** Foto recortada no slot; arrastável para reenquadrar. */
-  private photo(placed: PlacedPhoto, s: Slot, i: number, style: Style, quad: Point[]): Konva.Group {
+  private photo(placed: PlacedPhoto, s: Slot, i: number, style: Style, quad: Point[], tone: Tone): Konva.Group {
     const clip = new Konva.Group()
     clipToPolygon(clip, quad)
     const p = placement(placed.photo, s, placed.crop)
     const image = new Konva.Image({
-      image: filtered(placed.photo, style.filter),
+      image: filtered(placed.photo, style.filter, tone),
       ...p,
       draggable: true,
       // Evita que um toque com o dedo tremendo vire arraste.
