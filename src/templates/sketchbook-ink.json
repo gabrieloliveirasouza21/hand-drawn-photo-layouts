@@ -1,0 +1,15 @@
+{
+  "id": "sketchbook-ink",
+  "name": "Sketchbook nanquim (3 fotos)",
+  "size": [1600, 2000],
+  "paper": "#f4f0e6",
+  "ink": "#1c1a18",
+  "frame": false,
+  "scenes": [{ "kind": "mountains", "x": 0, "y": 0, "w": 1600, "h": 2000, "seed": 7 }],
+  "slots": [
+    { "x": 150, "y": 250, "w": 680, "h": 500, "rotate": -4, "mat": true, "tape": "top" },
+    { "x": 900, "y": 640, "w": 560, "h": 430, "rotate": 3.5, "mat": true, "tape": "corners" },
+    { "x": 330, "y": 1250, "w": 760, "h": 520, "rotate": -2, "mat": true, "tape": "top" }
+  ],
+  "caption": { "x": 1250, "y": 1830, "w": 620, "size": 120, "font": "Caveat" }
+}

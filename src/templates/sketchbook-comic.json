@@ -1,0 +1,18 @@
+{
+  "id": "sketchbook-comic",
+  "name": "Sketchbook quadrinhos (3 fotos)",
+  "size": [1600, 2000],
+  "paper": "#f4f0e6",
+  "ink": "#1c1a18",
+  "frame": false,
+  "scenes": [
+    { "kind": "mountains", "x": 110, "y": 720, "w": 640, "h": 560, "frame": true, "seed": 21 },
+    { "kind": "sea", "x": 930, "y": 1330, "w": 560, "h": 330, "frame": true, "seed": 5 }
+  ],
+  "slots": [
+    { "x": 110, "y": 110, "w": 1380, "h": 560, "rotate": 0 },
+    { "x": 800, "y": 720, "w": 690, "h": 560, "rotate": 0 },
+    { "x": 110, "y": 1330, "w": 770, "h": 520, "rotate": 0 }
+  ],
+  "caption": { "x": 1210, "y": 1700, "w": 560, "size": 110, "font": "Caveat" }
+}

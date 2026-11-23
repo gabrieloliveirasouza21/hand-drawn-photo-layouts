@@ -9,10 +9,13 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
 
 ## O que dá para fazer
 
-- **6 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
-  adesiva, já em 4:5), sketchbook rabiscado (desenhos de caneta azul e
-  aquarela no fundo), tira clássica (4 fotos), grade 2×2, polaroid e tira
-  horizontal (3 fotos)
+- **7 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
+  adesiva), sketchbook nanquim (paisagem a nanquim de página inteira com as
+  fotos coladas por cima), sketchbook quadrinhos (página em quadros, com fotos
+  e cenas desenhadas), tira clássica (4 fotos), grade 2×2, polaroid e tira
+  horizontal (3 fotos). Os três sketchbooks já saem em 4:5.
+- **Ilustração a nanquim gerada por código:** montanhas, floresta, mar e
+  cidade, só com traço de caneta e hachura (paralela e cruzada)
 - **Traço à mão:** bordas tortas com dupla passada de caneta (Rough.js), foto
   recortada seguindo a borda e legenda com sublinhado ondulado
 - **Fotos:** botão, arrastar arquivos para a página ou tocar num espaço vazio.
@@ -69,24 +72,23 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
   "pattern": "dots",
   "binding": "top",
   "frame": false,
-  "drawingInk": "#2a4da0",
-  "slots": [{ "x": 100, "y": 200, "w": 1000, "h": 1000, "rotate": -3, "tape": "top" }],
-  "drawings": [{ "kind": "flower", "x": 200, "y": 1500, "size": 300, "rotate": -8, "wash": "#f08a8a" }],
-  "caption": { "x": 600, "y": 1400, "w": 1000, "size": 120, "font": "Caveat" }
+  "scenes": [{ "kind": "mountains", "x": 0, "y": 1300, "w": 1200, "h": 500, "frame": true, "seed": 3 }],
+  "slots": [{ "x": 100, "y": 200, "w": 1000, "h": 1000, "rotate": -3, "tape": "top", "mat": true }],
+  "caption": { "x": 600, "y": 1220, "w": 1000, "size": 70, "font": "Caveat" }
 }
 ```
 
 - `slots`: onde as fotos entram; `rotate` em graus, em torno do centro;
-  `tape` (opcional): `top` ou `corners`
+  `tape` (opcional): `top` ou `corners`; `mat` (opcional): margem de papel em
+  volta, como foto impressa colada
 - `caption`: `x` é o centro horizontal, `y` o topo do texto
 - `paper` e `ink`: cores padrão, que o usuário pode trocar pelos papéis prontos
 - `pattern` (opcional): pauta do papel, `dots`, `lines` ou `grid`
 - `binding` (opcional): espiral de caderno no `top` ou na lateral (`left`)
-- `drawings` (opcional): rabiscos de fundo, atrás das fotos, posicionados pelo
-  centro. Tipos: `branch`, `flower`, `swirl`, `cloud`, `sun`, `moon`, `notes`,
-  `bolt`, `arrow`, `eye`, `stain` (mancha de café), `hatch` (hachura), `waves`.
-  `wash` pinta uma mancha de aquarela por baixo
-- `drawingInk` (opcional): cor da caneta dos rabiscos; padrão é `ink`
+- `scenes` (opcional): ilustrações a nanquim atrás das fotos, num retângulo
+  (`x`, `y`, `w`, `h`). Tipos: `mountains`, `forest`, `sea`, `city`.
+  `frame: true` desenha um quadro em volta (estilo quadrinho); `seed` muda o
+  desenho
 - `frame` (opcional): `false` tira a moldura desenhada em volta do papel
 
 ## Como funciona
@@ -97,7 +99,7 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 | `src/render/stage.ts` | desenha o layout com Konva; camada `art` (vai para o arquivo) e `ui` (seleção, nunca exportada) |
 | `src/render/rough-konva.ts` | converte os traços do Rough.js em `Konva.Path` |
 | `src/render/sketch.ts` | formas tortas, sublinhado, pauta, espiral e fita adesiva |
-| `src/render/drawings.ts` | rabiscos de fundo do sketchbook (flor, galho, olho etc.) |
+| `src/render/ink.ts` | motor de nanquim: traço tremido, hachura e as cenas (em cache) |
 | `src/lib/image.ts` | lê, converte HEIC e reduz as fotos para 2000px |
 | `src/lib/crop.ts` | enquadramento como "centro + zoom", que sobrevive à troca de layout |
 | `src/lib/filters.ts` | filtros por pixel e textura de grão |

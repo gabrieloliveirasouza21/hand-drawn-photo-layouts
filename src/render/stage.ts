@@ -5,7 +5,7 @@ import { filtered, grainPattern } from '../lib/filters'
 import type { Photo } from '../lib/image'
 import type { Caption, Slot, Template } from '../templates'
 import { gen, mix, toKonva, withAlpha } from './rough-konva'
-import { drawing } from './drawings'
+import { inkScene } from './ink'
 import { clipToPolygon, pagePattern, pen, spiralBinding, squiggle, tape, wobblyQuad, type Point } from './sketch'
 import { DEFAULT_STYLE, type Style } from './style'
 
@@ -107,10 +107,15 @@ export class LayoutRenderer {
     }
     if (t.binding) content.add(...spiralBinding(t.binding, w, h, t.ink, unit))
 
-    // Rabiscos de fundo, atrás das fotos. Com papel escolhido pelo usuário,
-    // a caneta acompanha a tinta do papel para continuar legível.
-    const drawingInk = style.paper ? t.ink : (template.drawingInk ?? t.ink)
-    t.drawings?.forEach((d, i) => content.add(drawing(d, drawingInk, stroke * 0.55, 300 + i * 17)))
+    // Ilustrações a nanquim atrás das fotos (geradas uma vez e guardadas).
+    t.scenes?.forEach((sc, i) => {
+      const art = inkScene(sc.kind, sc.w, sc.h, t.ink, t.paper, stroke * 0.5, sc.seed ?? 100 + i)
+      content.add(new Konva.Image({ image: art, x: sc.x, y: sc.y, width: sc.w, height: sc.h, listening: false }))
+      if (sc.frame) {
+        const quad = wobblyQuad(sc.w, sc.h, 200 + i, 0.008).map(([x, y]): Point => [x + sc.x + sc.w / 2, y + sc.y + sc.h / 2])
+        content.add(...toKonva(gen.polygon(quad, pen(t.ink, stroke * 1.1, 200 + i))))
+      }
+    })
 
     // Moldura do papel, torta como feita à mão
     if (t.frame !== false) {
@@ -210,6 +215,16 @@ export class LayoutRenderer {
     const quad = wobblyQuad(s.w, s.h, 10 + i)
     const border = pen(t.ink, stroke * 1.1, 10 + i)
     const tapeNodes = s.tape ? tape(s.tape, s.w, s.h, i, 40 + i) : []
+
+    // Margem de papel em volta: a foto parece impressa e colada sobre o desenho.
+    if (s.mat) {
+      const m = Math.min(s.w, s.h) * 0.045
+      const mat = wobblyQuad(s.w + m * 2, s.h + m * 2, 60 + i, 0.012)
+      group.add(
+        new Konva.Line({ points: mat.flat(), closed: true, fill: t.paper, shadowColor: '#000', shadowOpacity: 0.18, shadowBlur: m * 0.8, shadowOffset: { x: m * 0.15, y: m * 0.25 }, listening: false }),
+      )
+      group.add(...toKonva(gen.polygon(mat, pen(t.ink, stroke * 0.5, 60 + i))))
+    }
 
     if (placed) {
       group.add(this.photo(placed, s, i, style, quad))

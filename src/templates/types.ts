@@ -12,33 +12,23 @@ export interface Slot {
   rotate?: number
   /** Fita adesiva prendendo a foto. */
   tape?: TapeKind
+  /** Margem de papel em volta da foto, como foto impressa colada. */
+  mat?: boolean
 }
 
-export type DrawingKind =
-  | 'branch'
-  | 'flower'
-  | 'swirl'
-  | 'cloud'
-  | 'sun'
-  | 'moon'
-  | 'notes'
-  | 'bolt'
-  | 'arrow'
-  | 'eye'
-  | 'stain'
-  | 'hatch'
-  | 'waves'
+export type SceneKind = 'mountains' | 'forest' | 'sea' | 'city'
 
-/** Rabisco de fundo de sketchbook, desenhado atrás das fotos. */
-export interface Drawing {
-  kind: DrawingKind
-  /** Centro do desenho. */
+/** Ilustração a nanquim gerada por código, atrás das fotos. */
+export interface Scene {
+  kind: SceneKind
   x: number
   y: number
-  size: number
-  rotate?: number
-  /** Cor de aquarela por baixo do traço, em #rrggbb. */
-  wash?: string
+  w: number
+  h: number
+  /** Desenha um quadro à mão em volta (estilo quadrinho). */
+  frame?: boolean
+  /** Muda a variação do desenho. */
+  seed?: number
 }
 
 export interface Caption {
@@ -66,8 +56,6 @@ export interface Template {
   pattern?: PagePattern
   /** Espiral de caderno no topo ou na lateral esquerda. */
   binding?: 'top' | 'left'
-  /** Desenhos de fundo, atrás das fotos. */
-  drawings?: Drawing[]
-  /** Cor da caneta dos desenhos (ex.: azul de esferográfica). Padrão: `ink`. */
-  drawingInk?: string
+  /** Ilustrações a nanquim, atrás das fotos. */
+  scenes?: Scene[]
 }
