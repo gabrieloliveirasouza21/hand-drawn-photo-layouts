@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fix-lock": "npx -y npm@10 install --package-lock-only --ignore-scripts"
   },
   "devDependencies": {
     "typescript": "^7.0.2",
