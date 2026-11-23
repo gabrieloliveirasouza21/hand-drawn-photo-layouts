@@ -1,42 +1,65 @@
 import Konva from 'konva'
 import type { Options } from 'roughjs/bin/core'
+import { clampPosition, clampZoom, cropFromPlacement, placement, type Crop } from '../lib/crop'
 import type { Photo } from '../lib/image'
 import type { Caption, Doodle, Slot, Template } from '../templates'
 import { heartPoints, starPoints } from './doodles'
 import { gen, toKonva, withAlpha } from './rough-konva'
 
+/** Foto colocada num slot, com seu enquadramento. */
+export interface PlacedPhoto {
+  photo: Photo
+  crop: Crop
+}
+
+const SELECTION_COLOR = '#e4572e'
+
 /**
  * Desenha um template num Konva.Stage.
  * Tudo é desenhado nas coordenadas do arquivo final; o stage só é
  * escalado para caber na tela. O export (M5) desfaz essa escala.
+ *
+ * Camadas: "art" (o que vai para o arquivo final) e "ui" (seleção,
+ * nunca exportada).
  */
 export class LayoutRenderer {
   private stage: Konva.Stage
   private template: Template | null = null
 
-  /** Chamado quando o usuário clica/toca num slot. */
+  /** Clique/toque num slot (com ou sem foto). */
   onSlotClick: ((index: number) => void) | null = null
+  /** Clique/toque fora dos slots. */
+  onBackgroundClick: (() => void) | null = null
+  /** Usuário arrastou ou deu zoom numa foto. */
+  onCropChange: ((index: number, crop: Crop) => void) | null = null
 
   constructor(private container: HTMLDivElement) {
     this.stage = new Konva.Stage({ container, width: 1, height: 1 })
+    this.stage.on('click tap', (e) => {
+      if (e.target === this.stage) this.onBackgroundClick?.()
+    })
     new ResizeObserver(() => this.fit()).observe(container)
   }
 
-  /** `photos[i]` vai no slot i; slots sem foto mostram o placeholder. */
-  render(t: Template, photos: readonly (Photo | null | undefined)[] = []): void {
+  /** `photos[i]` vai no slot i; `selected` destaca um slot. */
+  render(
+    t: Template,
+    photos: readonly (PlacedPhoto | null | undefined)[] = [],
+    selected: number | null = null,
+  ): void {
     this.template = t
     this.stage.destroyChildren()
     this.container.style.cursor = ''
 
     const [w, h] = t.size
     const stroke = Math.min(w, h) / 220
-    const layer = new Konva.Layer()
+    const art = new Konva.Layer({ name: 'art' })
 
-    layer.add(new Konva.Rect({ width: w, height: h, fill: t.paper, listening: false }))
+    art.add(new Konva.Rect({ width: w, height: h, fill: t.paper, listening: false }))
 
     // Moldura do papel
     const inset = stroke * 4
-    layer.add(
+    art.add(
       ...toKonva(
         gen.rectangle(inset, inset, w - inset * 2, h - inset * 2, {
           stroke: t.ink,
@@ -48,15 +71,19 @@ export class LayoutRenderer {
       ),
     )
 
-    t.slots.forEach((s, i) => layer.add(this.slot(s, i, t, stroke, photos[i] ?? null)))
-    t.doodles?.forEach((d, i) => layer.add(this.doodle(d, i, t, stroke)))
-    if (t.caption) layer.add(this.caption(t.caption, t))
+    t.slots.forEach((s, i) => art.add(this.slot(s, i, t, stroke, photos[i] ?? null)))
+    t.doodles?.forEach((d, i) => art.add(this.doodle(d, i, t, stroke)))
+    if (t.caption) art.add(this.caption(t.caption, t))
 
-    this.stage.add(layer)
+    const ui = new Konva.Layer({ name: 'ui', listening: false })
+    const sel = selected !== null ? t.slots[selected] : undefined
+    if (sel) ui.add(this.selection(sel, stroke))
+
+    this.stage.add(art, ui)
     this.fit()
   }
 
-  private slot(s: Slot, i: number, t: Template, stroke: number, photo: Photo | null): Konva.Group {
+  private slot(s: Slot, i: number, t: Template, stroke: number, placed: PlacedPhoto | null): Konva.Group {
     const group = new Konva.Group({
       name: 'slot',
       x: s.x + s.w / 2,
@@ -67,7 +94,7 @@ export class LayoutRenderer {
     // Área clicável: os traços do Rough.js não recebem eventos.
     group.add(new Konva.Rect({ x: -s.w / 2, y: -s.h / 2, width: s.w, height: s.h, fill: 'transparent' }))
     group.on('click tap', () => this.onSlotClick?.(i))
-    group.on('mouseenter', () => (this.container.style.cursor = 'pointer'))
+    group.on('mouseenter', () => (this.container.style.cursor = placed ? 'move' : 'pointer'))
     group.on('mouseleave', () => (this.container.style.cursor = ''))
 
     const border: Options = {
@@ -78,9 +105,15 @@ export class LayoutRenderer {
       seed: 10 + i,
     }
 
-    if (photo) {
-      group.add(this.photo(photo, s))
+    if (placed) {
+      group.add(this.photo(placed, s, i))
       group.add(...toKonva(gen.rectangle(-s.w / 2, -s.h / 2, s.w, s.h, border)))
+      group.on('wheel', (e) => {
+        e.evt.preventDefault()
+        // Proporcional ao giro: suave no trackpad, rápido na roda do mouse.
+        const factor = Math.exp(-e.evt.deltaY * 0.002)
+        this.onCropChange?.(i, { ...placed.crop, zoom: clampZoom(placed.crop.zoom * factor) })
+      })
       return group
     }
 
@@ -111,18 +144,45 @@ export class LayoutRenderer {
     return group
   }
 
-  /** Foto em modo "cover": preenche o slot inteiro, centralizada, recortada nas bordas. */
-  private photo(photo: Photo, s: Slot): Konva.Group {
+  /** Foto recortada no slot; arrastável para reenquadrar. */
+  private photo(placed: PlacedPhoto, s: Slot, i: number): Konva.Group {
     const clip = new Konva.Group({ clipX: -s.w / 2, clipY: -s.h / 2, clipWidth: s.w, clipHeight: s.h })
-    const scale = Math.max(s.w / photo.width, s.h / photo.height)
-    const width = photo.width * scale
-    const height = photo.height * scale
-    clip.add(new Konva.Image({ image: photo.source, x: -width / 2, y: -height / 2, width, height }))
+    const p = placement(placed.photo, s, placed.crop)
+    const image = new Konva.Image({
+      image: placed.photo.source,
+      ...p,
+      draggable: true,
+      // Evita que um toque com o dedo tremendo vire arraste.
+      dragDistance: 6,
+    })
+    image.on('dragmove', () => image.position(clampPosition(image.x(), image.y(), p.width, p.height, s)))
+    image.on('dragend', () => {
+      const crop = cropFromPlacement({ ...p, x: image.x(), y: image.y() }, placed.crop.zoom)
+      this.onCropChange?.(i, crop)
+    })
+    clip.add(image)
     return clip
   }
 
+  private selection(s: Slot, stroke: number): Konva.Rect {
+    const pad = stroke * 3
+    return new Konva.Rect({
+      x: s.x + s.w / 2,
+      y: s.y + s.h / 2,
+      offsetX: s.w / 2 + pad,
+      offsetY: s.h / 2 + pad,
+      width: s.w + pad * 2,
+      height: s.h + pad * 2,
+      rotation: s.rotate ?? 0,
+      stroke: SELECTION_COLOR,
+      strokeWidth: stroke * 1.5,
+      dash: [stroke * 5, stroke * 3],
+      cornerRadius: stroke * 2,
+    })
+  }
+
   private doodle(d: Doodle, i: number, t: Template, stroke: number): Konva.Group {
-    const group = new Konva.Group({ x: d.x, y: d.y, rotation: d.rotate ?? 0 })
+    const group = new Konva.Group({ x: d.x, y: d.y, rotation: d.rotate ?? 0, listening: false })
     const opts: Options = { stroke: t.ink, strokeWidth: stroke * 0.8, roughness: 1.6, seed: 100 + i }
     const drawable =
       d.kind === 'star' ? gen.polygon(starPoints(d.size), opts) : gen.curve(heartPoints(d.size), opts)
@@ -144,6 +204,7 @@ export class LayoutRenderer {
       fontFamily: `${c.font}, cursive`,
       fill: t.ink,
       opacity: 0.45,
+      listening: false,
     })
     // Encolhe a fonte até caber em uma linha.
     const measured = text.measureSize(text.text()).width

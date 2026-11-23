@@ -63,6 +63,32 @@ button:disabled {
   cursor: progress;
 }
 
+#toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin: 0 16px 8px;
+  padding: 8px 12px;
+  border: 2px dashed #e4572e;
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+#toolbar[hidden] {
+  display: none;
+}
+
+#toolbar .zoom {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#toolbar input[type='range'] {
+  width: 140px;
+}
+
 #status {
   flex-basis: 100%;
   margin: 0;
