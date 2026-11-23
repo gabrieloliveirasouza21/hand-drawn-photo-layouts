@@ -1,0 +1,18 @@
+{
+  "id": "strip-4",
+  "name": "Tira clássica (4 fotos)",
+  "size": [1200, 3600],
+  "paper": "#f5efe1",
+  "ink": "#2b2420",
+  "slots": [
+    { "x": 100, "y": 100, "w": 1000, "h": 700, "rotate": -1 },
+    { "x": 100, "y": 850, "w": 1000, "h": 700, "rotate": 0.8 },
+    { "x": 100, "y": 1600, "w": 1000, "h": 700, "rotate": -0.6 },
+    { "x": 100, "y": 2350, "w": 1000, "h": 700, "rotate": 1 }
+  ],
+  "doodles": [
+    { "kind": "star", "x": 150, "y": 3300, "size": 140, "rotate": -12 },
+    { "kind": "heart", "x": 1050, "y": 3300, "size": 130, "rotate": 10 }
+  ],
+  "caption": { "x": 600, "y": 3220, "w": 700, "size": 120, "font": "Caveat" }
+}

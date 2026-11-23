@@ -1,0 +1,17 @@
+{
+  "id": "strip-3h",
+  "name": "Tira horizontal (3 fotos)",
+  "size": [3600, 1200],
+  "paper": "#f5efe1",
+  "ink": "#2b2420",
+  "slots": [
+    { "x": 100, "y": 100, "w": 1000, "h": 800, "rotate": -0.8 },
+    { "x": 1300, "y": 100, "w": 1000, "h": 800, "rotate": 0.6 },
+    { "x": 2500, "y": 100, "w": 1000, "h": 800, "rotate": -0.5 }
+  ],
+  "doodles": [
+    { "kind": "star", "x": 300, "y": 1060, "size": 130, "rotate": -10 },
+    { "kind": "heart", "x": 3300, "y": 1060, "size": 120, "rotate": 12 }
+  ],
+  "caption": { "x": 1800, "y": 985, "w": 1600, "size": 130, "font": "Caveat" }
+}
