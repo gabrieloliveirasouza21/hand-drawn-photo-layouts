@@ -75,6 +75,16 @@ export const PAPERS: PaperPreset[] = [
   { id: 'night', name: 'Noite', paper: '#24211f', ink: '#f3ecdf' },
 ]
 
+/**
+ * Papel de cor livre (#rrggbb). A tinta é escolhida pelo contraste:
+ * escura em papel claro, clara em papel escuro.
+ */
+export function customPaper(paper: string): PaperPreset {
+  const n = parseInt(paper.slice(1), 16)
+  const luma = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255
+  return { id: 'custom', name: 'Cor livre', paper, ink: luma > 0.55 ? '#1c1a18' : '#f3ecdf' }
+}
+
 export const SCENE_CHOICES: { id: SceneKind | 'none' | 'random' | ''; name: string }[] = [
   { id: '', name: 'Do layout' },
   { id: 'random', name: 'Aleatória' },

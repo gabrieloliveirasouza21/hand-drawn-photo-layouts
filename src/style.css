@@ -254,6 +254,29 @@ input[type='range'] {
   outline-offset: 2px;
 }
 
+.custom-paper {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.custom-paper input[type='color'] {
+  width: 30px;
+  height: 28px;
+  padding: 2px;
+  border: 0;
+  background: var(--face);
+  box-shadow: var(--raised);
+  cursor: pointer;
+}
+
+.custom-paper.active input[type='color'] {
+  outline: 2px solid var(--select);
+  outline-offset: 2px;
+}
+
 .swatch input:focus-visible + span {
   outline: 1px dotted var(--dark);
   outline-offset: 3px;

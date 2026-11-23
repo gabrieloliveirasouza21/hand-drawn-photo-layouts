@@ -37,7 +37,8 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
   - legenda opcional em 8 fontes manuscritas (Caveat, Patrick Hand, Permanent
     Marker, Rock Salt, Special Elite, Shadows Into Light, Gloria Hallelujah,
     Reenie Beanie)
-  - 13 cores de papel, cada uma com a cor de tinta que combina
+  - 13 cores de papel, cada uma com a cor de tinta que combina, e um seletor
+    de **cor livre** (a tinta fica escura ou clara conforme o papel)
   - pauta do caderno opcional
 - **Exportar:**
 

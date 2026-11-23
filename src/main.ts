@@ -12,6 +12,7 @@ import {
   FONTS,
   PAPERS,
   SCENE_CHOICES,
+  customPaper,
   loadFont,
   type FilterKind,
   type Style,
@@ -121,6 +122,10 @@ app.innerHTML = `
                   <span style="background: ${p.paper}; border-color: ${p.ink}"></span>
                 </label>`,
               ).join('')}
+              <label class="custom-paper" title="Cor livre">
+                <input id="paper-custom" type="color" value="#f5efe1" aria-label="Escolher qualquer cor de papel" />
+                <span>Cor livre</span>
+              </label>
             </fieldset>
           </div>`,
         )}
@@ -150,6 +155,7 @@ const grainInput = $<HTMLInputElement>('#grain')
 const captionInput = $<HTMLInputElement>('#caption')
 const fontSelect = $<HTMLSelectElement>('#font')
 const papersEl = $<HTMLFieldSetElement>('.papers')
+const customPaperInput = $<HTMLInputElement>('#paper-custom')
 const clockEl = $<HTMLSpanElement>('#clock')
 const formatSelect = $<HTMLSelectElement>('#format')
 const downloadButton = $<HTMLButtonElement>('#download')
@@ -413,9 +419,23 @@ fontSelect.addEventListener('change', async () => {
 })
 
 papersEl.addEventListener('change', (e) => {
-  const id = (e.target as HTMLInputElement).value
-  style.paper = PAPERS.find((p) => p.id === id) ?? null
+  const input = e.target as HTMLInputElement
+  if (input.type !== 'radio') return // o seletor de cor livre tem o próprio tratamento
+  customPaperInput.parentElement!.classList.remove('active')
+  style.paper = PAPERS.find((p) => p.id === input.value) ?? null
   redraw()
+})
+
+// Cor livre: redesenha no máximo uma vez por quadro enquanto o usuário arrasta.
+let paperFrame = 0
+customPaperInput.addEventListener('input', () => {
+  for (const radio of papersEl.querySelectorAll<HTMLInputElement>('input[type="radio"]')) radio.checked = false
+  customPaperInput.parentElement!.classList.add('active')
+  cancelAnimationFrame(paperFrame)
+  paperFrame = requestAnimationFrame(() => {
+    style.paper = customPaper(customPaperInput.value)
+    redraw()
+  })
 })
 
 // --- Exportar ---
