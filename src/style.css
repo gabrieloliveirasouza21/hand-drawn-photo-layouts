@@ -72,8 +72,25 @@ button:disabled {
   cursor: progress;
 }
 
-.style-bar {
+.style-panel {
   flex-basis: 100%;
+}
+
+.style-panel summary {
+  width: fit-content;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Em telas largas o painel fica sempre aberto, sem o "Estilo". */
+@media (min-width: 700px) {
+  .style-panel summary {
+    display: none;
+  }
+}
+
+.style-bar {
+  margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
@@ -135,6 +152,44 @@ button:disabled {
 .swatch input:focus-visible + span {
   outline: 3px solid #4a90d9;
   outline-offset: 2px;
+}
+
+#layouts {
+  display: flex;
+  gap: 8px;
+  margin: 0 16px 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.layout {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  width: 104px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.layout img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.layout:hover {
+  border-color: rgb(43 36 32 / 0.25);
+}
+
+.layout[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--paper);
 }
 
 #toolbar {

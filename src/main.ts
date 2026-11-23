@@ -3,6 +3,7 @@ import { DEFAULT_CROP, MAX_ZOOM } from './lib/crop'
 import { FORMATS, canShareFiles, download, fileName, share } from './lib/export'
 import { loadPhoto, releasePhoto, type Photo } from './lib/image'
 import { LayoutRenderer, type PlacedPhoto } from './render/stage'
+import { ThumbnailRenderer } from './render/thumbnails'
 import { DEFAULT_STYLE, FILTERS, FONTS, PAPERS, loadFont, type FilterKind, type Style } from './render/style'
 import { templates, type Template } from './templates'
 
@@ -14,10 +15,6 @@ app.innerHTML = `
   <header>
     <h1>Hand-drawn Photo Layouts</h1>
     <div class="controls">
-      <label>
-        Layout
-        <select id="layout"></select>
-      </label>
       <button id="add" type="button">Adicionar fotos</button>
       <input id="files" type="file" accept="${ACCEPT}" multiple hidden />
       <input id="file-one" type="file" accept="${ACCEPT}" hidden />
@@ -30,6 +27,8 @@ app.innerHTML = `
       <button id="download" type="button" class="primary">Baixar</button>
       <button id="share" type="button" class="primary" hidden>Compartilhar</button>
     </div>
+    <details class="style-panel">
+    <summary>Estilo</summary>
     <div class="style-bar">
       <label>
         Filtro
@@ -58,8 +57,19 @@ app.innerHTML = `
         ).join('')}
       </fieldset>
     </div>
+    </details>
     <p id="status" role="status"></p>
   </header>
+  <nav id="layouts" aria-label="Escolha o layout">
+    ${templates
+      .map(
+        (t) => `<button type="button" class="layout" data-id="${t.id}" aria-pressed="false" title="${t.name}">
+          <img alt="" />
+          <span>${t.name}</span>
+        </button>`,
+      )
+      .join('')}
+  </nav>
   <div id="toolbar" role="toolbar" aria-label="Foto selecionada" hidden>
     <strong id="sel-label"></strong>
     <label class="zoom">
@@ -77,7 +87,7 @@ app.innerHTML = `
 
 const $ = <T extends HTMLElement>(sel: string) => app.querySelector<T>(sel)!
 
-const select = $<HTMLSelectElement>('#layout')
+const layoutButtons = [...app.querySelectorAll<HTMLButtonElement>('#layouts .layout')]
 const addButton = $<HTMLButtonElement>('#add')
 const filesInput = $<HTMLInputElement>('#files')
 const fileOneInput = $<HTMLInputElement>('#file-one')
@@ -96,6 +106,7 @@ const grainInput = $<HTMLInputElement>('#grain')
 const captionInput = $<HTMLInputElement>('#caption')
 const fontSelect = $<HTMLSelectElement>('#font')
 const papersEl = $<HTMLFieldSetElement>('.papers')
+const stylePanel = $<HTMLDetailsElement>('.style-panel')
 const formatSelect = $<HTMLSelectElement>('#format')
 const downloadButton = $<HTMLButtonElement>('#download')
 const shareButton = $<HTMLButtonElement>('#share')
@@ -110,11 +121,31 @@ const style: Style = { ...DEFAULT_STYLE }
 let format = FORMATS[0]
 
 const renderer = new LayoutRenderer(stageEl)
+const thumbnails = new ThumbnailRenderer()
+let thumbnailTimer: number | undefined
 
 function redraw(): void {
   if (selected !== null && !placed[selected]) selected = null
   renderer.render(template, placed, selected, style, format.size)
   updateToolbar()
+  scheduleThumbnails()
+}
+
+/** Miniaturas mostram as fotos e o estilo atuais; atualiza com folga para não pesar ao digitar. */
+function scheduleThumbnails(): void {
+  clearTimeout(thumbnailTimer)
+  thumbnailTimer = window.setTimeout(() => {
+    for (const button of layoutButtons) {
+      const t = templates.find((x) => x.id === button.dataset.id)
+      if (t) button.querySelector('img')!.src = thumbnails.render(t, placed, style)
+    }
+  }, 300)
+}
+
+function updateLayoutButtons(): void {
+  for (const button of layoutButtons) {
+    button.setAttribute('aria-pressed', String(button.dataset.id === template.id))
+  }
 }
 
 function updateToolbar(): void {
@@ -184,13 +215,15 @@ function move(direction: -1 | 1): void {
 
 // --- Layout ---
 
-for (const t of templates) select.add(new Option(t.name, t.id))
-
-select.addEventListener('change', () => {
-  template = templates.find((t) => t.id === select.value) ?? templates[0]
-  selected = null
-  redraw()
-})
+for (const button of layoutButtons) {
+  button.addEventListener('click', () => {
+    template = templates.find((t) => t.id === button.dataset.id) ?? templates[0]
+    selected = null
+    updateLayoutButtons()
+    redraw()
+  })
+}
+updateLayoutButtons()
 
 // --- Upload ---
 
@@ -263,6 +296,14 @@ document.addEventListener('keydown', (e) => {
 })
 
 // --- Estilo ---
+
+// No celular o painel começa fechado para sobrar espaço para o layout.
+const wide = window.matchMedia('(min-width: 700px)')
+stylePanel.open = wide.matches
+// Em tela larga o "Estilo" some (CSS): reabre para o painel não ficar preso fechado.
+wide.addEventListener('change', () => {
+  if (wide.matches) stylePanel.open = true
+})
 
 filterSelect.addEventListener('change', () => {
   style.filter = filterSelect.value as FilterKind

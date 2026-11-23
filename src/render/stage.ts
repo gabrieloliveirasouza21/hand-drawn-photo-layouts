@@ -128,6 +128,18 @@ export class LayoutRenderer {
     this.fit()
   }
 
+  /** Imagem pequena (PNG em data URL) do quadro atual, sem a camada de UI. */
+  snapshot(maxSide: number): string {
+    const ui = this.stage.findOne('.ui')
+    ui?.hide()
+    try {
+      const ratio = maxSide / Math.max(this.stage.width(), this.stage.height())
+      return this.stage.toDataURL({ pixelRatio: ratio })
+    } finally {
+      ui?.show()
+    }
+  }
+
   /** Gera o arquivo final no tamanho do quadro, sem a camada de UI. */
   async exportImage(mimeType: string, quality = 0.92): Promise<Blob> {
     if (!this.frame) throw new Error('Nada para exportar')
