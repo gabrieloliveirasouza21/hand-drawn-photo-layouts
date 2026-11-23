@@ -9,7 +9,11 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
 
 ## O que dá para fazer
 
-- **4 layouts:** tira clássica (4 fotos), grade 2×2, polaroid e tira horizontal (3 fotos)
+- **5 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
+  adesiva, já em 4:5), tira clássica (4 fotos), grade 2×2, polaroid e tira
+  horizontal (3 fotos)
+- **Traço à mão:** bordas tortas com dupla passada de caneta (Rough.js), foto
+  recortada seguindo a borda e legenda com sublinhado ondulado
 - **Fotos:** botão, arrastar arquivos para a página ou tocar num espaço vazio.
   Aceita HEIC de iPhone.
 - **Enquadramento:** arraste a foto dentro do espaço, dê zoom (roda do mouse ou
@@ -63,16 +67,21 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
   "size": [1200, 1800],
   "paper": "#f5efe1",
   "ink": "#2b2420",
-  "slots": [{ "x": 100, "y": 100, "w": 1000, "h": 1000, "rotate": -1 }],
-  "doodles": [{ "kind": "star", "x": 150, "y": 1650, "size": 120 }],
-  "caption": { "x": 600, "y": 1300, "w": 800, "size": 120, "font": "Caveat" }
+  "pattern": "dots",
+  "binding": "top",
+  "frame": false,
+  "slots": [{ "x": 100, "y": 200, "w": 1000, "h": 1000, "rotate": -3, "tape": "top" }],
+  "caption": { "x": 600, "y": 1400, "w": 1000, "size": 120, "font": "Caveat" }
 }
 ```
 
-- `slots`: onde as fotos entram; `rotate` em graus, em torno do centro
-- `doodles`: `star` ou `heart`, posicionados pelo centro
+- `slots`: onde as fotos entram; `rotate` em graus, em torno do centro;
+  `tape` (opcional): `top` ou `corners`
 - `caption`: `x` é o centro horizontal, `y` o topo do texto
 - `paper` e `ink`: cores padrão, que o usuário pode trocar pelos papéis prontos
+- `pattern` (opcional): pauta do papel, `dots`, `lines` ou `grid`
+- `binding` (opcional): `top` desenha a espiral de caderno
+- `frame` (opcional): `false` tira a moldura desenhada em volta do papel
 
 ## Como funciona
 
@@ -81,6 +90,7 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 | `src/templates/` | layouts em JSON |
 | `src/render/stage.ts` | desenha o layout com Konva; camada `art` (vai para o arquivo) e `ui` (seleção, nunca exportada) |
 | `src/render/rough-konva.ts` | converte os traços do Rough.js em `Konva.Path` |
+| `src/render/sketch.ts` | formas tortas, sublinhado, pauta, espiral e fita adesiva |
 | `src/lib/image.ts` | lê, converte HEIC e reduz as fotos para 2000px |
 | `src/lib/crop.ts` | enquadramento como "centro + zoom", que sobrevive à troca de layout |
 | `src/lib/filters.ts` | filtros por pixel e textura de grão |
@@ -92,5 +102,6 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 - [heic2any](https://github.com/alexcorvi/heic2any) (fotos HEIC)
 - Fontes [Caveat](https://fonts.google.com/specimen/Caveat),
   [Patrick Hand](https://fonts.google.com/specimen/Patrick+Hand) e
-  [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker),
+  [Permanent Marker](https://fonts.google.com/specimen/Permanent+Marker) (legendas) e
+  [Pixelify Sans](https://fonts.google.com/specimen/Pixelify+Sans) (interface),
   via [Fontsource](https://fontsource.org/)

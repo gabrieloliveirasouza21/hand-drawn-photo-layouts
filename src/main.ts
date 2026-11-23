@@ -1,3 +1,5 @@
+import '@fontsource/pixelify-sans/400.css'
+import '@fontsource/pixelify-sans/700.css'
 import './style.css'
 import { DEFAULT_CROP, MAX_ZOOM } from './lib/crop'
 import { FORMATS, canShareFiles, download, fileName, share } from './lib/export'
@@ -11,78 +13,105 @@ const ACCEPT = 'image/*,.heic,.heif'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 
+/** Janela no estilo de sistema operacional antigo. */
+const win = (title: string, body: string, cls = '') => `
+  <section class="window ${cls}" aria-label="${title}">
+    <div class="titlebar">
+      <span>${title}</span>
+      <span class="titlebar-buttons" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span>
+    </div>
+    ${body}
+  </section>`
+
 app.innerHTML = `
-  <header>
-    <h1>Hand-drawn Photo Layouts</h1>
-    <div class="controls">
-      <button id="add" type="button">Adicionar fotos</button>
-      <input id="files" type="file" accept="${ACCEPT}" multiple hidden />
-      <input id="file-one" type="file" accept="${ACCEPT}" hidden />
-      <label>
-        Formato
-        <select id="format">
-          ${FORMATS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
-        </select>
-      </label>
-      <button id="download" type="button" class="primary">Baixar</button>
-      <button id="share" type="button" class="primary" hidden>Compartilhar</button>
-    </div>
-    <details class="style-panel">
-    <summary>Estilo</summary>
-    <div class="style-bar">
-      <label>
-        Filtro
-        <select id="filter">
-          ${FILTERS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
-        </select>
-      </label>
-      <label class="check"><input id="grain" type="checkbox" /> Grão</label>
-      <label>
-        Legenda
-        <input id="caption" type="text" maxlength="60" placeholder="sua legenda aqui" />
-      </label>
-      <label>
-        Fonte
-        <select id="font">
-          ${FONTS.map((f, i) => `<option value="${i}" style="font-family: '${f.family}'">${f.family}</option>`).join('')}
-        </select>
-      </label>
-      <fieldset class="papers">
-        <legend>Papel</legend>
-        ${PAPERS.map(
-          (p) => `<label class="swatch" title="${p.name}">
-            <input type="radio" name="paper" value="${p.id}" aria-label="${p.name}" />
-            <span style="background: ${p.paper}; border-color: ${p.ink}"></span>
-          </label>`,
-        ).join('')}
-      </fieldset>
-    </div>
-    </details>
-    <p id="status" role="status"></p>
-  </header>
-  <nav id="layouts" aria-label="Escolha o layout">
-    ${templates
-      .map(
-        (t) => `<button type="button" class="layout" data-id="${t.id}" aria-pressed="false" title="${t.name}">
-          <img alt="" />
-          <span>${t.name}</span>
-        </button>`,
-      )
-      .join('')}
-  </nav>
-  <div id="toolbar" role="toolbar" aria-label="Foto selecionada" hidden>
-    <strong id="sel-label"></strong>
-    <label class="zoom">
-      Zoom
-      <input id="zoom" type="range" min="1" max="${MAX_ZOOM}" step="0.01" />
-    </label>
-    <button id="prev" type="button" title="Mover para o slot anterior" aria-label="Mover para o slot anterior">◀</button>
-    <button id="next" type="button" title="Mover para o próximo slot" aria-label="Mover para o próximo slot">▶</button>
-    <button id="replace" type="button">Trocar foto</button>
-    <button id="remove" type="button">Remover</button>
-    <button id="deselect" type="button" title="Fechar" aria-label="Fechar">✕</button>
+  <div class="menubar">
+    <span class="menubar-app">▣ PHOTO·LAYOUTS</span>
+    <span class="menubar-clock" id="clock" aria-hidden="true"></span>
   </div>
-  <div id="stage"></div>
+  <main class="desktop">
+    <h1 class="desktop-title">HAND-DRAWN PHOTO LAYOUTS</h1>
+    <div class="windows">
+      ${win(
+        'editor.exe',
+        `
+        <div class="menu">
+          <button id="add" type="button"><u>A</u>dicionar fotos</button>
+          <input id="files" type="file" accept="${ACCEPT}" multiple hidden />
+          <input id="file-one" type="file" accept="${ACCEPT}" hidden />
+          <span class="menu-spacer"></span>
+          <label class="inline">
+            Formato
+            <select id="format">
+              ${FORMATS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
+            </select>
+          </label>
+          <button id="download" type="button" class="primary"><u>B</u>aixar</button>
+          <button id="share" type="button" hidden>Compartilhar</button>
+        </div>
+        <div id="toolbar" role="toolbar" aria-label="Foto selecionada" hidden>
+          <strong id="sel-label"></strong>
+          <label class="zoom">
+            Zoom
+            <input id="zoom" type="range" min="1" max="${MAX_ZOOM}" step="0.01" />
+          </label>
+          <button id="prev" type="button" title="Mover para o slot anterior" aria-label="Mover para o slot anterior">◀</button>
+          <button id="next" type="button" title="Mover para o próximo slot" aria-label="Mover para o próximo slot">▶</button>
+          <button id="replace" type="button">Trocar foto</button>
+          <button id="remove" type="button">Remover</button>
+          <button id="deselect" type="button" title="Fechar" aria-label="Fechar">✕</button>
+        </div>
+        <div id="stage"></div>
+        <div class="statusbar"><span id="status" role="status"></span></div>`,
+        'window-editor',
+      )}
+      <div class="side">
+        ${win(
+          'layouts',
+          `<nav id="layouts" aria-label="Escolha o layout">
+            ${templates
+              .map(
+                (t) => `<button type="button" class="layout" data-id="${t.id}" aria-pressed="false" title="${t.name}">
+                  <img alt="" />
+                  <span>${t.name}</span>
+                </button>`,
+              )
+              .join('')}
+          </nav>`,
+        )}
+        ${win(
+          'estilo.cfg',
+          `<div class="form">
+            <label>
+              Filtro
+              <select id="filter">
+                ${FILTERS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
+              </select>
+            </label>
+            <label class="check"><input id="grain" type="checkbox" /> Grão de filme</label>
+            <label>
+              Legenda
+              <input id="caption" type="text" maxlength="60" placeholder="sua legenda aqui" />
+            </label>
+            <label>
+              Fonte
+              <select id="font">
+                ${FONTS.map((f, i) => `<option value="${i}" style="font-family: '${f.family}'">${f.family}</option>`).join('')}
+              </select>
+            </label>
+            <fieldset class="papers">
+              <legend>Papel</legend>
+              ${PAPERS.map(
+                (p) => `<label class="swatch" title="${p.name}">
+                  <input type="radio" name="paper" value="${p.id}" aria-label="${p.name}" />
+                  <span style="background: ${p.paper}; border-color: ${p.ink}"></span>
+                </label>`,
+              ).join('')}
+            </fieldset>
+          </div>`,
+        )}
+      </div>
+    </div>
+  </main>
 `
 
 const $ = <T extends HTMLElement>(sel: string) => app.querySelector<T>(sel)!
@@ -91,7 +120,7 @@ const layoutButtons = [...app.querySelectorAll<HTMLButtonElement>('#layouts .lay
 const addButton = $<HTMLButtonElement>('#add')
 const filesInput = $<HTMLInputElement>('#files')
 const fileOneInput = $<HTMLInputElement>('#file-one')
-const statusEl = $<HTMLParagraphElement>('#status')
+const statusEl = $<HTMLSpanElement>('#status')
 const toolbar = $<HTMLDivElement>('#toolbar')
 const selLabel = $<HTMLElement>('#sel-label')
 const zoomInput = $<HTMLInputElement>('#zoom')
@@ -106,7 +135,7 @@ const grainInput = $<HTMLInputElement>('#grain')
 const captionInput = $<HTMLInputElement>('#caption')
 const fontSelect = $<HTMLSelectElement>('#font')
 const papersEl = $<HTMLFieldSetElement>('.papers')
-const stylePanel = $<HTMLDetailsElement>('.style-panel')
+const clockEl = $<HTMLSpanElement>('#clock')
 const formatSelect = $<HTMLSelectElement>('#format')
 const downloadButton = $<HTMLButtonElement>('#download')
 const shareButton = $<HTMLButtonElement>('#share')
@@ -295,15 +324,15 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') deselect()
 })
 
-// --- Estilo ---
+// --- Relógio da barra de menu ---
 
-// No celular o painel começa fechado para sobrar espaço para o layout.
-const wide = window.matchMedia('(min-width: 700px)')
-stylePanel.open = wide.matches
-// Em tela larga o "Estilo" some (CSS): reabre para o painel não ficar preso fechado.
-wide.addEventListener('change', () => {
-  if (wide.matches) stylePanel.open = true
-})
+function tick(): void {
+  clockEl.textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+tick()
+setInterval(tick, 15_000)
+
+// --- Estilo ---
 
 filterSelect.addEventListener('change', () => {
   style.filter = filterSelect.value as FilterKind

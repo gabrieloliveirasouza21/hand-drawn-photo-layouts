@@ -1,4 +1,7 @@
-// Coordenadas em pixels do arquivo final (resolução de exportação).
+// Coordenadas em pixels do arquivo final (resolução de impressão).
+
+export type TapeKind = 'top' | 'corners'
+export type PagePattern = 'dots' | 'lines' | 'grid'
 
 export interface Slot {
   x: number
@@ -7,17 +10,8 @@ export interface Slot {
   h: number
   /** Rotação em graus, em torno do centro do slot. */
   rotate?: number
-}
-
-export type DoodleKind = 'star' | 'heart'
-
-export interface Doodle {
-  kind: DoodleKind
-  /** Centro do doodle. */
-  x: number
-  y: number
-  size: number
-  rotate?: number
+  /** Fita adesiva prendendo a foto. */
+  tape?: TapeKind
 }
 
 export interface Caption {
@@ -38,6 +32,11 @@ export interface Template {
   /** Cor do traço, em #rrggbb. */
   ink: string
   slots: Slot[]
-  doodles?: Doodle[]
   caption?: Caption
+  /** Moldura desenhada em volta do papel (padrão: true). */
+  frame?: boolean
+  /** Pauta do papel. */
+  pattern?: PagePattern
+  /** Espiral de caderno no topo. */
+  binding?: 'top'
 }

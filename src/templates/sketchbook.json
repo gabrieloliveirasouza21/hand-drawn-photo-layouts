@@ -1,0 +1,16 @@
+{
+  "id": "sketchbook",
+  "name": "Sketchbook (3 fotos)",
+  "size": [1600, 2000],
+  "paper": "#f7f2e6",
+  "ink": "#2b2420",
+  "frame": false,
+  "pattern": "dots",
+  "binding": "top",
+  "slots": [
+    { "x": 130, "y": 250, "w": 820, "h": 620, "rotate": -4, "tape": "top" },
+    { "x": 1000, "y": 340, "w": 480, "h": 640, "rotate": 5, "tape": "corners" },
+    { "x": 250, "y": 1030, "w": 1080, "h": 690, "rotate": -2, "tape": "top" }
+  ],
+  "caption": { "x": 800, "y": 1770, "w": 1300, "size": 150, "font": "Caveat" }
+}

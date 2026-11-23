@@ -3,9 +3,9 @@ import type { Options } from 'roughjs/bin/core'
 import { clampPosition, clampZoom, cropFromPlacement, placement, type Crop } from '../lib/crop'
 import { filtered, grainPattern } from '../lib/filters'
 import type { Photo } from '../lib/image'
-import type { Caption, Doodle, Slot, Template } from '../templates'
-import { heartPoints, starPoints } from './doodles'
+import type { Caption, Slot, Template } from '../templates'
 import { gen, mix, toKonva, withAlpha } from './rough-konva'
+import { clipToPolygon, pagePattern, pen, spiralBinding, squiggle, tape, wobblyQuad, type Point } from './sketch'
 import { DEFAULT_STYLE, type Style } from './style'
 
 /** Foto colocada num slot, com seu enquadramento. */
@@ -97,22 +97,19 @@ export class LayoutRenderer {
       }),
     )
 
-    // Moldura do papel
-    const inset = stroke * 4
-    content.add(
-      ...toKonva(
-        gen.rectangle(inset, inset, w - inset * 2, h - inset * 2, {
-          stroke: t.ink,
-          strokeWidth: stroke * 0.6,
-          roughness: 1.2,
-          bowing: 0.8,
-          seed: 1,
-        }),
-      ),
-    )
+    // Pauta e espiral (sketchbook)
+    const unit = Math.min(w, h) / 27
+    if (t.pattern) content.add(pagePattern(t.pattern, w, h, t.ink, unit, t.binding ? unit * 2.6 : unit))
+    if (t.binding) content.add(...spiralBinding(w, t.ink, unit))
+
+    // Moldura do papel, torta como feita à mão
+    if (t.frame !== false) {
+      const inset = stroke * 5
+      const frame = wobblyQuad(w - inset * 2, h - inset * 2, 1, 0.006).map(([x, y]): Point => [x + w / 2, y + h / 2])
+      content.add(...toKonva(gen.polygon(frame, pen(t.ink, stroke * 0.7, 1))))
+    }
 
     t.slots.forEach((s, i) => content.add(this.slot(s, i, t, stroke, photos[i] ?? null, style)))
-    t.doodles?.forEach((d, i) => content.add(this.doodle(d, i, t, stroke)))
 
     const sel = selected !== null ? t.slots[selected] : undefined
     if (sel) uiContent.add(this.selection(sel, stroke))
@@ -120,8 +117,18 @@ export class LayoutRenderer {
     // Legenda vazia mostra um texto de exemplo só na tela, fora da arte.
     if (t.caption) {
       const text = style.caption.trim()
-      if (text) content.add(this.caption(t.caption, t, text, style, 1))
-      else uiContent.add(this.caption(t.caption, t, 'sua legenda aqui', style, 0.4))
+      if (text) {
+        const caption = this.caption(t.caption, t, text, style, 1)
+        content.add(caption)
+        // Sublinhado ondulado, do tamanho do texto.
+        const width = Math.min(t.caption.w, caption.measureSize(text).width)
+        const y = t.caption.y + caption.fontSize() * 1.05
+        content.add(
+          ...squiggle(t.caption.x - width / 2, t.caption.x + width / 2, y, caption.fontSize() * 0.06, pen(t.ink, stroke * 0.6, 7)),
+        )
+      } else {
+        uiContent.add(this.caption(t.caption, t, 'sua legenda aqui', style, 0.4))
+      }
     }
 
     this.stage.add(art, ui)
@@ -189,17 +196,15 @@ export class LayoutRenderer {
     group.on('mouseenter', () => (this.container.style.cursor = placed ? 'move' : 'pointer'))
     group.on('mouseleave', () => (this.container.style.cursor = ''))
 
-    const border: Options = {
-      stroke: t.ink,
-      strokeWidth: stroke,
-      roughness: 1.4,
-      bowing: 1.2,
-      seed: 10 + i,
-    }
+    // Cantos levemente tortos: o espaço não é um retângulo perfeito.
+    const quad = wobblyQuad(s.w, s.h, 10 + i)
+    const border = pen(t.ink, stroke * 1.1, 10 + i)
+    const tapeNodes = s.tape ? tape(s.tape, s.w, s.h, i, 40 + i) : []
 
     if (placed) {
-      group.add(this.photo(placed, s, i, style))
-      group.add(...toKonva(gen.rectangle(-s.w / 2, -s.h / 2, s.w, s.h, border)))
+      group.add(this.photo(placed, s, i, style, quad))
+      group.add(...toKonva(gen.polygon(quad, border)))
+      group.add(...tapeNodes)
       group.on('wheel', (e) => {
         e.evt.preventDefault()
         // Proporcional ao giro: suave no trackpad, rápido na roda do mouse.
@@ -213,10 +218,12 @@ export class LayoutRenderer {
       ...border,
       fill: withAlpha(t.ink, 0.15),
       fillStyle: 'hachure',
+      hachureAngle: -41 + i * 7,
       hachureGap: stroke * 5,
       fillWeight: stroke * 0.4,
     }
-    group.add(...toKonva(gen.rectangle(-s.w / 2, -s.h / 2, s.w, s.h, placeholder)))
+    group.add(...toKonva(gen.polygon(quad, placeholder)))
+    group.add(...tapeNodes)
 
     const fontSize = Math.min(s.w, s.h) / 8
     group.add(
@@ -237,8 +244,9 @@ export class LayoutRenderer {
   }
 
   /** Foto recortada no slot; arrastável para reenquadrar. */
-  private photo(placed: PlacedPhoto, s: Slot, i: number, style: Style): Konva.Group {
-    const clip = new Konva.Group({ clipX: -s.w / 2, clipY: -s.h / 2, clipWidth: s.w, clipHeight: s.h })
+  private photo(placed: PlacedPhoto, s: Slot, i: number, style: Style, quad: Point[]): Konva.Group {
+    const clip = new Konva.Group()
+    clipToPolygon(clip, quad)
     const p = placement(placed.photo, s, placed.crop)
     const image = new Konva.Image({
       image: filtered(placed.photo, style.filter),
@@ -290,15 +298,6 @@ export class LayoutRenderer {
       dash: [stroke * 5, stroke * 3],
       cornerRadius: stroke * 2,
     })
-  }
-
-  private doodle(d: Doodle, i: number, t: Template, stroke: number): Konva.Group {
-    const group = new Konva.Group({ x: d.x, y: d.y, rotation: d.rotate ?? 0, listening: false })
-    const opts: Options = { stroke: t.ink, strokeWidth: stroke * 0.8, roughness: 1.6, seed: 100 + i }
-    const drawable =
-      d.kind === 'star' ? gen.polygon(starPoints(d.size), opts) : gen.curve(heartPoints(d.size), opts)
-    group.add(...toKonva(drawable))
-    return group
   }
 
   private caption(c: Caption, t: Template, content: string, style: Style, opacity: number): Konva.Text {
