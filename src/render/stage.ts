@@ -5,7 +5,7 @@ import { filtered, grainPattern } from '../lib/filters'
 import type { Photo } from '../lib/image'
 import type { Caption, Doodle, Slot, Template } from '../templates'
 import { heartPoints, starPoints } from './doodles'
-import { gen, toKonva, withAlpha } from './rough-konva'
+import { gen, mix, toKonva, withAlpha } from './rough-konva'
 import { DEFAULT_STYLE, type Style } from './style'
 
 /** Foto colocada num slot, com seu enquadramento. */
@@ -18,15 +18,21 @@ const SELECTION_COLOR = '#e4572e'
 
 /**
  * Desenha um template num Konva.Stage.
- * Tudo é desenhado nas coordenadas do arquivo final; o stage só é
- * escalado para caber na tela. O export (M5) desfaz essa escala.
  *
- * Camadas: "art" (o que vai para o arquivo final) e "ui" (seleção,
- * nunca exportada).
+ * O stage trabalha nas coordenadas do arquivo final (o "quadro"): no
+ * formato de impressão o quadro é o próprio layout; nos de Instagram é
+ * 1080×N, com o layout centralizado e reduzido sobre um fundo. Na tela o
+ * stage só é escalado para caber; o export desfaz essa escala.
+ *
+ * Camadas: "art" (o que vai para o arquivo final) e "ui" (seleção e
+ * textos de exemplo, nunca exportada).
  */
 export class LayoutRenderer {
   private stage: Konva.Stage
-  private template: Template | null = null
+  /** Tamanho do arquivo final, em px. */
+  private frame: [number, number] | null = null
+  /** Escala do layout dentro do quadro (1 no formato de impressão). */
+  private contentScale = 1
 
   /** Clique/toque num slot (com ou sem foto). */
   onSlotClick: ((index: number) => void) | null = null
@@ -43,28 +49,57 @@ export class LayoutRenderer {
     new ResizeObserver(() => this.fit()).observe(container)
   }
 
-  /** `photos[i]` vai no slot i; `selected` destaca um slot. */
+  /**
+   * `photos[i]` vai no slot i; `selected` destaca um slot.
+   * `outputSize` = tamanho do arquivo final; null = tamanho do layout.
+   */
   render(
     template: Template,
     photos: readonly (PlacedPhoto | null | undefined)[] = [],
     selected: number | null = null,
     style: Style = DEFAULT_STYLE,
+    outputSize: [number, number] | null = null,
   ): void {
     // O papel escolhido pelo usuário substitui as cores do layout.
     const t: Template = { ...template, paper: style.paper?.paper ?? template.paper, ink: style.paper?.ink ?? template.ink }
-    this.template = t
     this.stage.destroyChildren()
     this.container.style.cursor = ''
 
     const [w, h] = t.size
     const stroke = Math.min(w, h) / 220
     const art = new Konva.Layer({ name: 'art' })
+    const ui = new Konva.Layer({ name: 'ui', listening: false })
 
-    art.add(new Konva.Rect({ width: w, height: h, fill: t.paper, listening: false }))
+    // Posição do layout dentro do quadro final.
+    const [fw, fh] = outputSize ?? t.size
+    const margin = outputSize ? Math.min(fw, fh) * 0.07 : 0
+    const scale = outputSize ? Math.min((fw - margin * 2) / w, (fh - margin * 2) / h) : 1
+    const transform = { x: (fw - w * scale) / 2, y: (fh - h * scale) / 2, scaleX: scale, scaleY: scale }
+    this.frame = [fw, fh]
+    this.contentScale = scale
+
+    if (outputSize) {
+      art.add(new Konva.Rect({ width: fw, height: fh, fill: mix(t.paper, t.ink, 0.12), listening: false }))
+    }
+    const content = new Konva.Group(transform)
+    const uiContent = new Konva.Group(transform)
+    art.add(content)
+    ui.add(uiContent)
+
+    content.add(
+      new Konva.Rect({
+        width: w,
+        height: h,
+        fill: t.paper,
+        listening: false,
+        // Sombra leve: o papel "apoiado" sobre o fundo.
+        ...(outputSize && { shadowColor: '#000', shadowOpacity: 0.3, shadowBlur: stroke * 8, shadowOffsetY: stroke * 2 }),
+      }),
+    )
 
     // Moldura do papel
     const inset = stroke * 4
-    art.add(
+    content.add(
       ...toKonva(
         gen.rectangle(inset, inset, w - inset * 2, h - inset * 2, {
           stroke: t.ink,
@@ -76,22 +111,49 @@ export class LayoutRenderer {
       ),
     )
 
-    t.slots.forEach((s, i) => art.add(this.slot(s, i, t, stroke, photos[i] ?? null, style)))
-    t.doodles?.forEach((d, i) => art.add(this.doodle(d, i, t, stroke)))
+    t.slots.forEach((s, i) => content.add(this.slot(s, i, t, stroke, photos[i] ?? null, style)))
+    t.doodles?.forEach((d, i) => content.add(this.doodle(d, i, t, stroke)))
 
-    const ui = new Konva.Layer({ name: 'ui', listening: false })
     const sel = selected !== null ? t.slots[selected] : undefined
-    if (sel) ui.add(this.selection(sel, stroke))
+    if (sel) uiContent.add(this.selection(sel, stroke))
 
     // Legenda vazia mostra um texto de exemplo só na tela, fora da arte.
     if (t.caption) {
       const text = style.caption.trim()
-      if (text) art.add(this.caption(t.caption, t, text, style, 1))
-      else ui.add(this.caption(t.caption, t, 'sua legenda aqui', style, 0.4))
+      if (text) content.add(this.caption(t.caption, t, text, style, 1))
+      else uiContent.add(this.caption(t.caption, t, 'sua legenda aqui', style, 0.4))
     }
 
     this.stage.add(art, ui)
     this.fit()
+  }
+
+  /** Gera o arquivo final no tamanho do quadro, sem a camada de UI. */
+  async exportImage(mimeType: string, quality = 0.92): Promise<Blob> {
+    if (!this.frame) throw new Error('Nada para exportar')
+    const [fw, fh] = this.frame
+    const ui = this.stage.findOne('.ui')
+    ui?.hide()
+    let raw: HTMLCanvasElement
+    try {
+      // Redesenha a cena na resolução final sem redimensionar o stage
+      // (o que estouraria o limite de canvas do iOS em telas 3×).
+      raw = this.stage.toCanvas({ pixelRatio: fw / this.stage.width() })
+    } finally {
+      ui?.show()
+    }
+
+    // O arredondamento pode errar por 1px: garante o tamanho exato.
+    let out = raw
+    if (raw.width !== fw || raw.height !== fh) {
+      out = document.createElement('canvas')
+      out.width = fw
+      out.height = fh
+      out.getContext('2d')!.drawImage(raw, 0, 0, fw, fh)
+    }
+    return new Promise((resolve, reject) =>
+      out.toBlob((b) => (b ? resolve(b) : reject(new Error('Falha ao codificar a imagem'))), mimeType, quality),
+    )
   }
 
   private slot(
@@ -190,8 +252,8 @@ export class LayoutRenderer {
           // Os tipos do Konva pedem <img>, mas createPattern aceita canvas.
           fillPatternImage: grainPattern() as unknown as HTMLImageElement,
           fillPatternRepeat: 'repeat',
-          // Grão de ~2px no arquivo final.
-          fillPatternScale: { x: 2, y: 2 },
+          // Grão de ~2px no arquivo final, em qualquer formato.
+          fillPatternScale: { x: 2 / this.contentScale, y: 2 / this.contentScale },
           globalCompositeOperation: 'overlay',
           opacity: 0.35,
           listening: false,
@@ -251,8 +313,8 @@ export class LayoutRenderer {
 
   /** Escala o stage para caber no container, mantendo a proporção. */
   private fit(): void {
-    if (!this.template) return
-    const [w, h] = this.template.size
+    if (!this.frame) return
+    const [w, h] = this.frame
     const { clientWidth, clientHeight } = this.container
     if (!clientWidth || !clientHeight) return
     const scale = Math.min(clientWidth / w, clientHeight / h)

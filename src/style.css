@@ -58,6 +58,15 @@ button {
   cursor: pointer;
 }
 
+button.primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+button[hidden] {
+  display: none;
+}
+
 button:disabled {
   opacity: 0.5;
   cursor: progress;

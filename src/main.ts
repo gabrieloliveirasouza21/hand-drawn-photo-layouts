@@ -1,5 +1,6 @@
 import './style.css'
 import { DEFAULT_CROP, MAX_ZOOM } from './lib/crop'
+import { FORMATS, canShareFiles, download, fileName, share } from './lib/export'
 import { loadPhoto, releasePhoto, type Photo } from './lib/image'
 import { LayoutRenderer, type PlacedPhoto } from './render/stage'
 import { DEFAULT_STYLE, FILTERS, FONTS, PAPERS, loadFont, type FilterKind, type Style } from './render/style'
@@ -20,6 +21,14 @@ app.innerHTML = `
       <button id="add" type="button">Adicionar fotos</button>
       <input id="files" type="file" accept="${ACCEPT}" multiple hidden />
       <input id="file-one" type="file" accept="${ACCEPT}" hidden />
+      <label>
+        Formato
+        <select id="format">
+          ${FORMATS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
+        </select>
+      </label>
+      <button id="download" type="button" class="primary">Baixar</button>
+      <button id="share" type="button" class="primary" hidden>Compartilhar</button>
     </div>
     <div class="style-bar">
       <label>
@@ -87,6 +96,9 @@ const grainInput = $<HTMLInputElement>('#grain')
 const captionInput = $<HTMLInputElement>('#caption')
 const fontSelect = $<HTMLSelectElement>('#font')
 const papersEl = $<HTMLFieldSetElement>('.papers')
+const formatSelect = $<HTMLSelectElement>('#format')
+const downloadButton = $<HTMLButtonElement>('#download')
+const shareButton = $<HTMLButtonElement>('#share')
 
 // As fotos ficam guardadas independentemente do layout: trocar de layout
 // mantém a ordem e o enquadramento, e o layout mostra só as primeiras N.
@@ -95,12 +107,13 @@ let template: Template = templates[0]
 let selected: number | null = null
 let replaceIndex: number | null = null
 const style: Style = { ...DEFAULT_STYLE }
+let format = FORMATS[0]
 
 const renderer = new LayoutRenderer(stageEl)
 
 function redraw(): void {
   if (selected !== null && !placed[selected]) selected = null
-  renderer.render(template, placed, selected, style)
+  renderer.render(template, placed, selected, style, format.size)
   updateToolbar()
 }
 
@@ -277,6 +290,43 @@ papersEl.addEventListener('change', (e) => {
   style.paper = PAPERS.find((p) => p.id === id) ?? null
   redraw()
 })
+
+// --- Exportar ---
+
+formatSelect.addEventListener('change', () => {
+  format = FORMATS.find((f) => f.id === formatSelect.value) ?? FORMATS[0]
+  redraw()
+})
+
+async function exportImage(action: 'download' | 'share'): Promise<void> {
+  downloadButton.disabled = shareButton.disabled = true
+  statusEl.textContent = 'Gerando imagem…'
+  try {
+    const blob = await renderer.exportImage(format.mime)
+    const name = fileName(template.id, format)
+    if (action === 'share') {
+      try {
+        await share(blob, name)
+      } catch (err) {
+        // Safari recusa compartilhar se a imagem demorou a ficar pronta: baixa no lugar.
+        if (err instanceof DOMException && err.name === 'NotAllowedError') download(blob, name)
+        else throw err
+      }
+    } else {
+      download(blob, name)
+    }
+    statusEl.textContent = ''
+  } catch (err) {
+    console.error(err)
+    statusEl.textContent = 'Não consegui gerar a imagem.'
+  } finally {
+    downloadButton.disabled = shareButton.disabled = false
+  }
+}
+
+downloadButton.addEventListener('click', () => void exportImage('download'))
+shareButton.addEventListener('click', () => void exportImage('share'))
+shareButton.hidden = !canShareFiles()
 
 redraw()
 // O canvas não redesenha sozinho quando a fonte chega: espera e redesenha.
