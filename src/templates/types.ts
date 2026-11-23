@@ -29,6 +29,8 @@ export interface Scene {
   frame?: boolean
   /** Muda a variação do desenho. */
   seed?: number
+  /** 0–1. Abaixo de 1 a arte fica mais clara, como fundo. Padrão: 1. */
+  opacity?: number
 }
 
 export interface Caption {

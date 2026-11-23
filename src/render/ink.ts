@@ -413,24 +413,55 @@ const SCENES: Record<SceneKind, (pen: Pen, w: number, h: number) => void> = {
   },
 }
 
+// Cache das cenas prontas, limitado por pixels (cada cena de página inteira
+// tem ~4 milhões de pixels). Map mantém a ordem de uso: o mais antigo sai primeiro.
 const cache = new Map<string, HTMLCanvasElement>()
+const CACHE_BUDGET = 24_000_000
+let cachedPixels = 0
+
+function remember(key: string, canvas: HTMLCanvasElement): void {
+  cache.set(key, canvas)
+  cachedPixels += canvas.width * canvas.height
+  for (const [k, old] of cache) {
+    if (cachedPixels <= CACHE_BUDGET || k === key) break
+    cachedPixels -= old.width * old.height
+    // Só sai do cache; o navegador libera a memória quando nada mais usar.
+    cache.delete(k)
+  }
+}
 
 /**
  * Canvas com a cena desenhada em w×h (px do arquivo final), em cache.
- * `lw` = espessura base do traço.
+ * `lw` = espessura base do traço. `scale` < 1 gera uma versão reduzida
+ * (miniaturas), com o mesmo desenho.
  */
-export function inkScene(kind: SceneKind, w: number, h: number, ink: string, paper: string, lw: number, seed: number): HTMLCanvasElement {
-  const key = [kind, Math.round(w), Math.round(h), ink, paper, lw.toFixed(2), seed].join('|')
+export function inkScene(
+  kind: SceneKind,
+  w: number,
+  h: number,
+  ink: string,
+  paper: string,
+  lw: number,
+  seed: number,
+  scale = 1,
+): HTMLCanvasElement {
+  const key = [kind, Math.round(w), Math.round(h), ink, paper, lw.toFixed(2), seed, scale].join('|')
   const hit = cache.get(key)
-  if (hit) return hit
+  if (hit) {
+    // Marca como usado recentemente.
+    cache.delete(key)
+    cache.set(key, hit)
+    return hit
+  }
 
   const pen = new Pen(rng(seed), lw)
   SCENES[kind](pen, w, h)
 
   const canvas = document.createElement('canvas')
-  canvas.width = Math.round(w)
-  canvas.height = Math.round(h)
+  canvas.width = Math.max(1, Math.round(w * scale))
+  canvas.height = Math.max(1, Math.round(h * scale))
   const c = canvas.getContext('2d')!
+  c.scale(scale, scale)
   c.lineCap = 'round'
   c.lineJoin = 'round'
   c.strokeStyle = ink
@@ -449,6 +480,6 @@ export function inkScene(kind: SceneKind, w: number, h: number, ink: string, pap
   }
   // Fundo transparente: só tinta e as áreas "cover" (cor do papel), que
   // escondem os traços que ficariam atrás de montanhas e árvores.
-  cache.set(key, canvas)
+  remember(key, canvas)
   return canvas
 }

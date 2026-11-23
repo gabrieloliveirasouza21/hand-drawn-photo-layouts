@@ -15,7 +15,9 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
   e cenas desenhadas), tira clássica (4 fotos), grade 2×2, polaroid e tira
   horizontal (3 fotos). Os três sketchbooks já saem em 4:5.
 - **Ilustração a nanquim gerada por código:** montanhas, floresta, mar e
-  cidade, só com traço de caneta e hachura (paralela e cruzada)
+  cidade, só com traço de caneta e hachura (paralela e cruzada). Todo layout
+  tem uma arte de fundo; em **Arte nanquim** dá para trocar o tipo, tirar, ou
+  clicar em **Gerar outra arte** para sortear um desenho novo
 - **Traço à mão:** bordas tortas com dupla passada de caneta (Rough.js), foto
   recortada seguindo a borda e legenda com sublinhado ondulado
 - **Fotos:** botão, arrastar arquivos para a página ou tocar num espaço vazio.
@@ -88,7 +90,8 @@ As medidas são em pixels do arquivo de impressão (300 dpi: 1200×1800 = 10×15
 - `scenes` (opcional): ilustrações a nanquim atrás das fotos, num retângulo
   (`x`, `y`, `w`, `h`). Tipos: `mountains`, `forest`, `sea`, `city`.
   `frame: true` desenha um quadro em volta (estilo quadrinho); `seed` muda o
-  desenho
+  desenho; `opacity` (0–1) clareia a arte. Cenas sem quadro são arte de fundo:
+  o usuário pode trocar o tipo ou tirá-las. Cenas com quadro sempre aparecem
 - `frame` (opcional): `false` tira a moldura desenhada em volta do papel
 
 ## Como funciona

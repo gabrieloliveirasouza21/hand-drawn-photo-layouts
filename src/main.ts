@@ -6,7 +6,17 @@ import { FORMATS, download, fileName } from './lib/export'
 import { loadPhoto, releasePhoto, type Photo } from './lib/image'
 import { LayoutRenderer, type PlacedPhoto } from './render/stage'
 import { ThumbnailRenderer } from './render/thumbnails'
-import { DEFAULT_STYLE, FILTERS, FONTS, PAPERS, loadFont, type FilterKind, type Style } from './render/style'
+import {
+  DEFAULT_STYLE,
+  FILTERS,
+  FONTS,
+  PAPERS,
+  SCENE_CHOICES,
+  loadFont,
+  type FilterKind,
+  type Style,
+} from './render/style'
+import type { SceneKind } from './templates'
 import { templates, type Template } from './templates'
 
 const ACCEPT = 'image/*,.heic,.heif'
@@ -81,6 +91,13 @@ app.innerHTML = `
           'estilo.cfg',
           `<div class="form">
             <label>
+              Arte nanquim
+              <select id="scene">
+                ${SCENE_CHOICES.map((s) => `<option value="${s.id}">${s.name}</option>`).join('')}
+              </select>
+            </label>
+            <button id="reroll" type="button">✎ <u>G</u>erar outra arte</button>
+            <label>
               Filtro
               <select id="filter">
                 ${FILTERS.map((f) => `<option value="${f.id}">${f.name}</option>`).join('')}
@@ -136,6 +153,8 @@ const clockEl = $<HTMLSpanElement>('#clock')
 const formatSelect = $<HTMLSelectElement>('#format')
 const downloadButton = $<HTMLButtonElement>('#download')
 const captionOnInput = $<HTMLInputElement>('#caption-on')
+const sceneSelect = $<HTMLSelectElement>('#scene')
+const rerollButton = $<HTMLButtonElement>('#reroll')
 
 // As fotos ficam guardadas independentemente do layout: trocar de layout
 // mantém a ordem e o enquadramento, e o layout mostra só as primeiras N.
@@ -330,6 +349,18 @@ tick()
 setInterval(tick, 15_000)
 
 // --- Estilo ---
+
+sceneSelect.addEventListener('change', () => {
+  style.scene = (sceneSelect.value || null) as SceneKind | 'none' | null
+  rerollButton.disabled = style.scene === 'none'
+  redraw()
+})
+
+// Cada clique sorteia outra variação da arte (montanhas, prédios etc. mudam).
+rerollButton.addEventListener('click', () => {
+  style.sceneSeed += 1 + Math.floor(Math.random() * 1000)
+  redraw()
+})
 
 filterSelect.addEventListener('change', () => {
   style.filter = filterSelect.value as FilterKind

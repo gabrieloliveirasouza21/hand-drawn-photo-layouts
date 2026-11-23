@@ -42,7 +42,14 @@ export class LayoutRenderer {
   /** Usuário arrastou ou deu zoom numa foto. */
   onCropChange: ((index: number, crop: Crop) => void) | null = null
 
-  constructor(private container: HTMLDivElement) {
+  /**
+   * `sceneScale` < 1 desenha a arte nanquim em resolução menor (miniaturas).
+   * Na tela principal fica 1, pois o export usa os mesmos desenhos.
+   */
+  constructor(
+    private container: HTMLDivElement,
+    private sceneScale = 1,
+  ) {
     this.stage = new Konva.Stage({ container, width: 1, height: 1 })
     this.stage.on('click tap', (e) => {
       if (e.target === this.stage) this.onBackgroundClick?.()
@@ -105,17 +112,26 @@ export class LayoutRenderer {
       const left = t.binding === 'left' ? unit * 2.6 : unit
       content.add(pagePattern(t.pattern, w, h, t.ink, unit, top, left))
     }
-    if (t.binding) content.add(...spiralBinding(t.binding, w, h, t.ink, unit))
 
     // Ilustrações a nanquim atrás das fotos (geradas uma vez e guardadas).
+    // Cenas com quadro fazem parte do layout (quadrinhos); as sem quadro são
+    // arte de fundo, que o usuário pode trocar ou tirar.
     t.scenes?.forEach((sc, i) => {
-      const art = inkScene(sc.kind, sc.w, sc.h, t.ink, t.paper, stroke * 0.5, sc.seed ?? 100 + i)
-      content.add(new Konva.Image({ image: art, x: sc.x, y: sc.y, width: sc.w, height: sc.h, listening: false }))
+      if (!sc.frame && style.scene === 'none') return
+      const kind = style.scene && style.scene !== 'none' ? style.scene : sc.kind
+      const seed = (sc.seed ?? 100 + i) + style.sceneSeed * 7919
+      const art = inkScene(kind, sc.w, sc.h, t.ink, t.paper, stroke * 0.5, seed, this.sceneScale)
+      content.add(
+        new Konva.Image({ image: art, x: sc.x, y: sc.y, width: sc.w, height: sc.h, opacity: sc.opacity ?? 1, listening: false }),
+      )
       if (sc.frame) {
         const quad = wobblyQuad(sc.w, sc.h, 200 + i, 0.008).map(([x, y]): Point => [x + sc.x + sc.w / 2, y + sc.y + sc.h / 2])
         content.add(...toKonva(gen.polygon(quad, pen(t.ink, stroke * 1.1, 200 + i))))
       }
     })
+
+    // Espiral por cima da arte, como no caderno de verdade.
+    if (t.binding) content.add(...spiralBinding(t.binding, w, h, t.ink, unit))
 
     // Moldura do papel, torta como feita à mão
     if (t.frame !== false) {
@@ -338,6 +354,12 @@ export class LayoutRenderer {
       fontFamily: `"${style.font.family}", cursive`,
       fontStyle: String(style.font.weight),
       fill: t.ink,
+      // Contorno da cor do papel por baixo da letra: apaga os traços da arte
+      // logo atrás do texto, que continua legível sobre o desenho.
+      stroke: t.paper,
+      strokeWidth: c.size * 0.22,
+      fillAfterStrokeEnabled: true,
+      lineJoin: 'round',
       opacity,
       listening: false,
     })

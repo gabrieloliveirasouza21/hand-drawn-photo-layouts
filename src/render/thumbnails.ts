@@ -21,7 +21,8 @@ export class ThumbnailRenderer {
       pointerEvents: 'none',
     })
     document.body.append(box)
-    this.renderer = new LayoutRenderer(box)
+    // Arte nanquim em ~15% da resolução: suficiente para uma miniatura.
+    this.renderer = new LayoutRenderer(box, 0.15)
   }
 
   /** Data URL PNG com o layout, as fotos e o estilo atuais. */
