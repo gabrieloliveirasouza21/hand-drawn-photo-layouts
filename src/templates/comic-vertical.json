@@ -1,0 +1,16 @@
+{
+  "id": "comic-vertical",
+  "name": "Quadrinhos vertical (4 fotos)",
+  "size": [1600, 2000],
+  "paper": "#f4f0e6",
+  "ink": "#1c1a18",
+  "frame": false,
+  "scenes": [{ "kind": "forest", "x": 800, "y": 1110, "w": 690, "h": 390, "frame": true, "seed": 13 }],
+  "slots": [
+    { "x": 110, "y": 110, "w": 1380, "h": 520, "rotate": 0 },
+    { "x": 110, "y": 680, "w": 640, "h": 820, "rotate": 0 },
+    { "x": 800, "y": 680, "w": 690, "h": 380, "rotate": 0 },
+    { "x": 110, "y": 1550, "w": 780, "h": 340, "rotate": 0 }
+  ],
+  "caption": { "x": 1195, "y": 1665, "w": 560, "size": 120, "font": "Caveat" }
+}

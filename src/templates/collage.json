@@ -1,0 +1,17 @@
+{
+  "id": "collage",
+  "name": "Colagem (5 fotos)",
+  "size": [1600, 2000],
+  "paper": "#f4f0e6",
+  "ink": "#1c1a18",
+  "frame": false,
+  "scenes": [{ "kind": "beach", "x": 0, "y": 0, "w": 1600, "h": 2000, "seed": 77, "opacity": 0.75 }],
+  "slots": [
+    { "x": 110, "y": 130, "w": 760, "h": 560, "rotate": -5, "mat": true, "tape": "top" },
+    { "x": 880, "y": 220, "w": 610, "h": 450, "rotate": 4, "mat": true, "tape": "corners" },
+    { "x": 170, "y": 770, "w": 600, "h": 780, "rotate": 3, "mat": true, "tape": "top" },
+    { "x": 870, "y": 760, "w": 620, "h": 460, "rotate": -3, "mat": true, "tape": "corners" },
+    { "x": 860, "y": 1290, "w": 630, "h": 450, "rotate": 2.5, "mat": true, "tape": "top" }
+  ],
+  "caption": { "x": 470, "y": 1700, "w": 640, "size": 120, "font": "Caveat" }
+}

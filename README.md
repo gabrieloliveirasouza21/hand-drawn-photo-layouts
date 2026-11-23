@@ -9,11 +9,13 @@ Tudo roda no navegador. As fotos não são enviadas para nenhum servidor.
 
 ## O que dá para fazer
 
-- **7 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
+- **9 layouts:** sketchbook (página de caderno com espiral, pontilhado e fita
   adesiva), sketchbook nanquim (paisagem a nanquim de página inteira com as
   fotos coladas por cima), sketchbook quadrinhos (página em quadros, com fotos
-  e cenas desenhadas), tira clássica (4 fotos), grade 2×2, polaroid e tira
-  horizontal (3 fotos). Os três sketchbooks já saem em 4:5.
+  e cenas desenhadas), colagem (5 fotos inclinadas sobre uma praia a
+  nanquim), quadrinhos vertical (4 fotos e uma cena), tira clássica (4 fotos),
+  grade 2×2, polaroid e tira horizontal (3 fotos). Os cinco primeiros já saem
+  em 4:5 e preenchem o feed do Instagram inteiro.
 - **Ilustração a nanquim gerada por código:** 6 cenários naturais
   (montanhas, floresta, mar, praia, campo e deserto), só com traço de caneta e
   hachura. Cada cenário tem elementos opcionais (lago ou campina, farol, barco,

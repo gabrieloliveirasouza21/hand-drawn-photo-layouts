@@ -6,8 +6,20 @@ import strip3h from './strip-3h.json'
 import sketchbook from './sketchbook.json'
 import sketchbookInk from './sketchbook-ink.json'
 import sketchbookComic from './sketchbook-comic.json'
+import collage from './collage.json'
+import comicVertical from './comic-vertical.json'
 
 // Para adicionar um layout: crie o JSON nesta pasta e inclua aqui.
-export const templates = [sketchbook, sketchbookInk, sketchbookComic, strip4, grid2x2, polaroid, strip3h] as Template[]
+export const templates = [
+  sketchbook,
+  sketchbookInk,
+  sketchbookComic,
+  collage,
+  comicVertical,
+  strip4,
+  grid2x2,
+  polaroid,
+  strip3h,
+] as Template[]
 
 export type * from './types'
